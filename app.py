@@ -63,26 +63,42 @@ def logout():
     logout_user()
     return redirect(url_for('home'))
 
+@app.route('/recover_password', methods=['GET', 'POST'])
+def recover_password():
+    form = RegistrationForm()
+    if form.validate_on_submit():
+        user = User.query.filter_by(username=form.username.data).first()
+        email = User.query.filter_by(email=form.email.data).first()
+
+        if user or email:
+            # Logic for handling password recovery
+            # For example, send a recovery email or display a confirmation message
+            flash('A recovery email has been sent if the user exists.', 'info')
+            return redirect(url_for('login'))
+
+    return render_template('recover.html', form=form)
+
+@app.route('/login', methods=['GET', 'POST'])
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     form = LoginForm()
-    if 'failed_logins' not in session:  # Only set it if it doesn't exist
+    if 'failed_logins' not in session:  # Initialize if not present
         session['failed_logins'] = 0
 
     if form.validate_on_submit():
         user = User.query.filter_by(username=form.username.data).first()
         if user and bcrypt.check_password_hash(user.password, form.password.data):
             login_user(user, remember=True)
-            session['failed_logins'] = 0 
+            session['failed_logins'] = 0
             return redirect(url_for('dashboard'))
         else:
             session['failed_logins'] += 1
             flash('Invalid username or password', 'danger')
-            if user and session['failed_logins'] == 3:
-                flash('You put a wrong password 3 times. Recover it', 'danger')
+            if session['failed_logins'] >= 3:
+                flash('You have entered the wrong password 3 times. Please recover your password.', 'danger')
+                return redirect(url_for('recover_password'))
 
     return render_template('login.html', form=form)
-
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     form = RegistrationForm()
