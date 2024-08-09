@@ -48,14 +48,13 @@ input[type="submit"]:hover {
 
 .register-link {
     text-align: center;
-    margin-top: 15px;
+    margin-top: 20px;
+    width: 100%; /* Ensures it spans the full width of the login container */
 }
 
-.reister-container
-{
-    background: rgb(201, 162, 162);
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    width: 300px;
+.flashes {
+    margin: 0;            /* Remove any default margins */
+    padding: 0;           /* Remove any default padding */
+    list-style: none;     /* Remove bullet points */
+    text-align: center;   /* Center text within the flashes container */
 }

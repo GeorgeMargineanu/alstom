@@ -1,4 +1,4 @@
-from flask import Flask, render_template, redirect, url_for
+from flask import Flask, render_template, redirect, url_for, session, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, EmailField
@@ -71,8 +71,9 @@ def login():
         if user and bcrypt.check_password_hash(user.password, form.password.data):
             login_user(user, remember=True)
             return redirect(url_for('dashboard'))
+        else:
+            flash('Invalid username or password', 'danger')
     return render_template('login.html', form=form)
-
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
