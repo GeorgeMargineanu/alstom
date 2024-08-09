@@ -1,15 +1,18 @@
 from flask import Flask, render_template, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField
-from wtforms.validators import DataRequired, ValidationError
+from wtforms import StringField, PasswordField, SubmitField, EmailField
+from wtforms.validators import DataRequired, ValidationError, Email
 from flask_login import UserMixin, login_user, LoginManager, login_required, current_user, logout_user
 from flask_bcrypt import Bcrypt
+from flask_migrate import Migrate
+import email_validator
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 app.config['SECRET_KEY'] = 'thisismysecret'
 db = SQLAlchemy(app)
+migrate = Migrate(app, db)
 bcrypt = Bcrypt(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
@@ -22,18 +25,23 @@ class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(150), nullable=False, unique=True)
     password = db.Column(db.String(150), nullable=False)
+    email = db.Column(db.String(150), unique=True, nullable=True)
+    is_confirmed = db.Column(db.String(150), nullable=True)
+    confirmed_on = db.Column(db.DateTime, nullable=True)
 
 class RegistrationForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired()])
     password = PasswordField('Password', validators=[DataRequired()])
+    email = EmailField('Email', validators=[DataRequired(), Email()])
     submit = SubmitField('Register')
-
+    
     def validate_username(self, username):
         existing_user_username = User.query.filter_by(username=username.data).first()
         print(f"Checking if username '{username.data}' exists...")  # Debug statement
         if existing_user_username:
             print(f"Username '{username.data}' already exists.")  # Debug statement
             raise ValidationError('Username already exists')
+        
 
 class LoginForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired()])
@@ -72,7 +80,7 @@ def register():
     if form.validate_on_submit():
         try:
             hashed_password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
-            new_user = User(username=form.username.data, password=hashed_password)
+            new_user = User(username=form.username.data, password=hashed_password, email=form.email.data)
             db.session.add(new_user)
             db.session.commit()
             return redirect(url_for('home'))
