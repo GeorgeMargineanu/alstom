@@ -6,7 +6,8 @@ from wtforms.validators import DataRequired, ValidationError, Email
 from flask_login import UserMixin, login_user, LoginManager, login_required, current_user, logout_user
 from flask_bcrypt import Bcrypt
 from flask_migrate import Migrate
-import email_validator
+from flask_mail import Mail, Message
+
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
@@ -16,6 +17,31 @@ migrate = Migrate(app, db)
 bcrypt = Bcrypt(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
+
+#Config mail server
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USERNAME'] = 'georgemargineanu20@gmail.com'
+app.config['MAIL_PASSWORD'] = 'atbe zdbo wsvy qsis'
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USE_SSL'] = False
+mail = Mail(app)
+
+
+@app.route("/send_mail", methods=['GET', 'POST'])
+def index():
+    msg = Message(
+        subject='Hello from the other side!',
+        sender=app.config['MAIL_USERNAME'],  # Using the configured email address
+        recipients=['georgemargineanu20@gmail.com']  # Replace with the recipient's email address
+    )
+    msg.body = "Hey, sending you this email from my Flask app. pupici."
+
+    try:
+        mail.send(msg)
+        return "Message sent!"
+    except Exception as e:
+        return f"Failed to send email. Error: {e}"
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -63,6 +89,8 @@ def logout():
     logout_user()
     return redirect(url_for('home'))
 
+
+
 @app.route('/recover_password', methods=['GET', 'POST'])
 def recover_password():
     form = RegistrationForm()
@@ -79,7 +107,6 @@ def recover_password():
     return render_template('recover.html', form=form)
 
 @app.route('/login', methods=['GET', 'POST'])
-@app.route('/login', methods=['GET', 'POST'])
 def login():
     form = LoginForm()
     if 'failed_logins' not in session:  # Initialize if not present
@@ -89,7 +116,7 @@ def login():
         user = User.query.filter_by(username=form.username.data).first()
         if user and bcrypt.check_password_hash(user.password, form.password.data):
             login_user(user, remember=True)
-            session['failed_logins'] = 0
+            session['failed_logins'] = 0  # Reset failed login counter on success
             return redirect(url_for('dashboard'))
         else:
             session['failed_logins'] += 1
