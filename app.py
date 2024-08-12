@@ -8,7 +8,6 @@ from flask_bcrypt import Bcrypt
 from flask_migrate import Migrate
 from flask_mail import Mail, Message
 
-
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 app.config['SECRET_KEY'] = 'thisismysecret'
@@ -27,13 +26,12 @@ app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USE_SSL'] = False
 mail = Mail(app)
 
-
 @app.route("/send_mail", methods=['GET', 'POST'])
-def index():
+def send_mail():
     msg = Message(
         subject='Hello from the other side!',
-        sender=app.config['MAIL_USERNAME'],  # Using the configured email address
-        recipients=['georgemargineanu20@gmail.com']  # Replace with the recipient's email address
+        sender=app.config['MAIL_USERNAME'],
+        recipients=['georgemargineanu20@gmail.com']
     )
     msg.body = "Hey, sending you this email from my Flask app. pupici."
 
@@ -41,6 +39,8 @@ def index():
         mail.send(msg)
         return "Message sent!"
     except Exception as e:
+        # Log the error
+        print(f"Failed to send email. Error: {e}")
         return f"Failed to send email. Error: {e}"
 
 @login_manager.user_loader
@@ -90,7 +90,6 @@ def logout():
     return redirect(url_for('home'))
 
 
-
 @app.route('/recover_password', methods=['GET', 'POST'])
 def recover_password():
     form = RegistrationForm()
@@ -99,9 +98,20 @@ def recover_password():
         email = User.query.filter_by(email=form.email.data).first()
 
         if user or email:
-            # Logic for handling password recovery
-            # For example, send a recovery email or display a confirmation message
-            flash('A recovery email has been sent if the user exists.', 'info')
+            # Here, instead of just flashing a message, you should send an email
+            msg = Message(
+                subject='Password Recovery',
+                sender=app.config['MAIL_USERNAME'],
+                recipients=[form.email.data]
+            )
+            msg.body = "Instructions to reset your password."
+
+            try:
+                mail.send(msg)
+                flash('A recovery email has been sent if the email is registered.', 'info')
+            except Exception as e:
+                flash(f'Failed to send email. Error: {e}', 'danger')
+
             return redirect(url_for('login'))
 
     return render_template('recover.html', form=form)
