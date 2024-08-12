@@ -8,7 +8,6 @@ from flask_bcrypt import Bcrypt
 from flask_migrate import Migrate
 from flask_mail import Mail, Message
 
-
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 app.config['SECRET_KEY'] = 'thisismysecret'
@@ -22,26 +21,11 @@ login_manager.login_view = 'login'
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USERNAME'] = 'georgemargineanu20@gmail.com'
-app.config['MAIL_PASSWORD'] = 'atbe zdbo wsvy qsis'
+app.config['MAIL_PASSWORD'] = 'dujo jgcj cdjc ulux'
 app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USE_SSL'] = False
 mail = Mail(app)
 
-
-@app.route("/send_mail", methods=['GET', 'POST'])
-def index():
-    msg = Message(
-        subject='Hello from the other side!',
-        sender=app.config['MAIL_USERNAME'],  # Using the configured email address
-        recipients=['georgemargineanu20@gmail.com']  # Replace with the recipient's email address
-    )
-    msg.body = "Hey, sending you this email from my Flask app. pupici."
-
-    try:
-        mail.send(msg)
-        return "Message sent!"
-    except Exception as e:
-        return f"Failed to send email. Error: {e}"
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -54,6 +38,11 @@ class User(db.Model, UserMixin):
     email = db.Column(db.String(150), unique=True, nullable=True)
     is_confirmed = db.Column(db.String(150), nullable=True)
     confirmed_on = db.Column(db.DateTime, nullable=True)
+
+class RecoveryForm(FlaskForm):
+    email = EmailField('Email', validators=[DataRequired(), Email()])
+    submit = SubmitField('Recover')
+
 
 class RegistrationForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired()])
@@ -89,22 +78,32 @@ def logout():
     logout_user()
     return redirect(url_for('home'))
 
-
-
 @app.route('/recover_password', methods=['GET', 'POST'])
 def recover_password():
-    form = RegistrationForm()
+    form = RecoveryForm() 
     if form.validate_on_submit():
-        user = User.query.filter_by(username=form.username.data).first()
         email = User.query.filter_by(email=form.email.data).first()
+ 
+        if email:
+            # Logic to handle password recovery
+            msg = Message(
+                subject='Password Recovery',
+                sender=app.config['MAIL_USERNAME'],
+                recipients=[form.email.data]  # Use the entered email address
+            )
+            msg.body = "To recover your password, please follow the instructions in this email."
 
-        if user or email:
-            # Logic for handling password recovery
-            # For example, send a recovery email or display a confirmation message
-            flash('A recovery email has been sent if the user exists.', 'info')
-            return redirect(url_for('login'))
-
+            try:
+                mail.send(msg)
+                flash('A recovery email has been sent.', 'info')
+                return redirect(url_for('login'))  # Redirect or render with confirmation
+            except Exception as e:
+                flash(f"Failed to send email. Error: {e}", 'danger')
+        else:
+            flash('No user found with the provided username or email.', 'danger')
+    
     return render_template('recover.html', form=form)
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
