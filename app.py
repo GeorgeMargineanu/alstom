@@ -125,6 +125,7 @@ def login():
                 return redirect(url_for('recover_password'))
 
     return render_template('login.html', form=form)
+
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     form = RegistrationForm()
