@@ -28,7 +28,6 @@ app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USE_SSL'] = False
 mail = Mail(app)
 
-
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
@@ -40,6 +39,7 @@ class User(db.Model, UserMixin):
     email = db.Column(db.String(150), unique=True, nullable=True)
     is_confirmed = db.Column(db.String(150), nullable=True)
     confirmed_on = db.Column(db.DateTime, nullable=True)
+    user_type = db.Column(db.String(150), nullable=False)
 
     def get_reset_token(self, expires_sec=1800):
         s = Serializer(app.config['SECRET_KEY'], expires_sec)
@@ -54,6 +54,7 @@ class User(db.Model, UserMixin):
             return None
         return User.query.get(user_id)
 
+
 class RecoveryForm(FlaskForm):
     email = EmailField('Email', validators=[DataRequired(), Email()])
     submit = SubmitField('Recover')
@@ -67,8 +68,6 @@ class ResetPasswordForm(FlaskForm):
     def validate_password(self, password):
         if self.password.data != self.confirm_password.data:
             raise ValidationError('Passwords must match.')
-
-
 
 class RegistrationForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired()])
@@ -184,7 +183,7 @@ def register():
     if form.validate_on_submit():
         try:
             hashed_password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
-            new_user = User(username=form.username.data, password=hashed_password, email=form.email.data, confirmed_on = datetime.datetime.now())
+            new_user = User(username=form.username.data, password=hashed_password, email=form.email.data, confirmed_on = datetime.datetime.now(), user_type = 'user')
             db.session.add(new_user)
             db.session.commit()
             return redirect(url_for('home'))
