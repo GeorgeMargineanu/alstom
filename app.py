@@ -58,8 +58,7 @@ class RecoveryForm(FlaskForm):
     email = EmailField('Email', validators=[DataRequired(), Email()])
     submit = SubmitField('Recover')
 
-<<<<<<< Updated upstream
-=======
+
 class ResetPasswordForm(FlaskForm):
     password = PasswordField('New Password', validators=[DataRequired()])
     confirm_password = PasswordField('Confirm Password', validators=[DataRequired()])
@@ -70,7 +69,7 @@ class ResetPasswordForm(FlaskForm):
             raise ValidationError('Passwords must match.')
 
 
->>>>>>> Stashed changes
+
 class RegistrationForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired()])
     password = PasswordField('Password', validators=[DataRequired()])
