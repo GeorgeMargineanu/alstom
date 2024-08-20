@@ -7,7 +7,12 @@ from flask_login import UserMixin, login_user, LoginManager, login_required, cur
 from flask_bcrypt import Bcrypt
 from flask_migrate import Migrate
 from flask_mail import Mail, Message
+<<<<<<< Updated upstream
 import datetime
+=======
+from itsdangerous import URLSafeTimedSerializer as Serializer
+
+>>>>>>> Stashed changes
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
@@ -40,10 +45,36 @@ class User(db.Model, UserMixin):
     is_confirmed = db.Column(db.String(150), nullable=True)
     confirmed_on = db.Column(db.DateTime, nullable=True)
 
+    def get_reset_token(self, expires_sec=1800):
+        s = Serializer(app.config['SECRET_KEY'], expires_sec)
+        return s.dumps({'user_id': self.id})
+
+    @staticmethod
+    def verify_reset_token(token):
+        s = Serializer(app.config['SECRET_KEY'])
+        try:
+            user_id = s.loads(token, max_age=1800)['user_id']
+        except:
+            return None
+        return User.query.get(user_id)
+
 class RecoveryForm(FlaskForm):
     email = EmailField('Email', validators=[DataRequired(), Email()])
     submit = SubmitField('Recover')
 
+<<<<<<< Updated upstream
+=======
+class ResetPasswordForm(FlaskForm):
+    password = PasswordField('New Password', validators=[DataRequired()])
+    confirm_password = PasswordField('Confirm Password', validators=[DataRequired()])
+    submit = SubmitField('Reset Password')
+
+    def validate_password(self, password):
+        if self.password.data != self.confirm_password.data:
+            raise ValidationError('Passwords must match.')
+
+
+>>>>>>> Stashed changes
 class RegistrationForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired()])
     password = PasswordField('Password', validators=[DataRequired()])
@@ -88,29 +119,47 @@ def logout():
 
 @app.route('/recover_password', methods=['GET', 'POST'])
 def recover_password():
-    form = RecoveryForm() 
+    form = RecoveryForm()
     if form.validate_on_submit():
-        email = User.query.filter_by(email=form.email.data).first()
- 
-        if email:
-            # Logic to handle password recovery
+        user = User.query.filter_by(email=form.email.data).first()
+        if user:
+            token = user.get_reset_token()
             msg = Message(
-                subject='Password Recovery',
+                subject='Password Reset Request',
                 sender=app.config['MAIL_USERNAME'],
-                recipients=[form.email.data]  # Use the entered email address
+                recipients=[user.email]
             )
-            msg.body = "To recover your password, please follow the instructions in this email."
+            reset_link = url_for('reset_token', token=token, _external=True)
+            msg.body = f'''To reset your password, visit the following link:
+{reset_link}
 
-            try:
-                mail.send(msg)
-                flash('A recovery email has been sent.', 'info')
-                return redirect(url_for('login'))  # Redirect or render with confirmation
-            except Exception as e:
-                flash(f"Failed to send email. Error: {e}", 'danger')
+If you did not make this request, simply ignore this email and no changes will be made.
+'''
+            mail.send(msg)
+            flash('A password reset email has been sent.', 'info')
+            return redirect(url_for('login'))
         else:
-            flash('No user found with the provided username or email.', 'danger')
-    
+            flash('No account found with that email.', 'danger')
+
     return render_template('recover.html', form=form)
+
+
+@app.route('/reset_password/<token>', methods=['GET', 'POST'])
+def reset_token(token):
+    user = User.verify_reset_token(token)
+    if not user:
+        flash('That is an invalid or expired token', 'danger')
+        return redirect(url_for('recover_password'))
+
+    form = ResetPasswordForm()
+    if form.validate_on_submit():
+        hashed_password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
+        user.password = hashed_password
+        db.session.commit()
+        flash('Your password has been updated! You are now able to log in', 'success')
+        return redirect(url_for('login'))
+
+    return render_template('reset_token.html', form=form)
 
 
 @app.route('/login', methods=['GET', 'POST'])

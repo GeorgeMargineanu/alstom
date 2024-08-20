@@ -1,21 +1,27 @@
 <form method="POST" action="">
-    {{ form.hidden_tag() }}
-    <div>
-        {{ form.email.label }}
-        {{ form.email(class="form-control", placeholder="Enter your email") }}
-    </div>
-    <div>
-        {% with messages = get_flashed_messages(with_categories=True) %}
-            {% if messages %}
-                <ul class="flashes">
-                    {% for category, message in messages %}
-                        <li class="{{ category }}">{{ message }}</li>
-                    {% endfor %}
-                </ul>
-            {% endif %}
-        {% endwith %}
-    </div>
-    <div>
-        {{ form.submit(class="btn btn-primary", value="Recover Password") }}
+    <div class="recover_container">
+        {{ form.hidden_tag() }}
+        <h1>Password Recovery</h1> <!-- Added title -->
+
+        <div class="form-group">
+            {{ form.email.label }}
+            {{ form.email(class="form-control", placeholder="Enter your email") }}
+        </div>
+
+        <div class="form-group">
+            {% with messages = get_flashed_messages(with_categories=True) %}
+                {% if messages %}
+                    <ul class="flashes">
+                        {% for category, message in messages %}
+                            <li class="{{ category }}">{{ message }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            {% endwith %}
+        </div>
+
+        <div class="form-group">
+            {{ form.submit(class="btn btn-primary", value="Recover Password") }}
+        </div>
     </div>
 </form>
