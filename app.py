@@ -56,6 +56,10 @@ class RegistrationForm(FlaskForm):
         if existing_user_username:
             print(f"Username '{username.data}' already exists.")  # Debug statement
             raise ValidationError('Username already exists')
+    
+    def validate_email(self, email):
+        if '@alstom' not in email.data:
+            raise ValidationError("You are not authorized to create an account!")
         
 
 class LoginForm(FlaskForm):
