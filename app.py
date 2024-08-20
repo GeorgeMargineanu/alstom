@@ -7,6 +7,7 @@ from flask_login import UserMixin, login_user, LoginManager, login_required, cur
 from flask_bcrypt import Bcrypt
 from flask_migrate import Migrate
 from flask_mail import Mail, Message
+import datetime
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
@@ -43,7 +44,6 @@ class RecoveryForm(FlaskForm):
     email = EmailField('Email', validators=[DataRequired(), Email()])
     submit = SubmitField('Recover')
 
-
 class RegistrationForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired()])
     password = PasswordField('Password', validators=[DataRequired()])
@@ -56,6 +56,10 @@ class RegistrationForm(FlaskForm):
         if existing_user_username:
             print(f"Username '{username.data}' already exists.")  # Debug statement
             raise ValidationError('Username already exists')
+    
+    def validate_email(self, email):
+        if '@alstom' not in email.data:
+            raise ValidationError("You are not authorized to create an account!")
         
 
 class LoginForm(FlaskForm):
@@ -71,6 +75,10 @@ def home():
 @login_required
 def dashboard():
     return render_template('dashboard.html')
+
+@app.route('/welcome')
+def welcome():
+    return render_template('welcome.html')
 
 @app.route('/logout', methods=['GET', 'POST'])
 @login_required
@@ -132,7 +140,7 @@ def register():
     if form.validate_on_submit():
         try:
             hashed_password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
-            new_user = User(username=form.username.data, password=hashed_password, email=form.email.data)
+            new_user = User(username=form.username.data, password=hashed_password, email=form.email.data, confirmed_on = datetime.datetime.now())
             db.session.add(new_user)
             db.session.commit()
             return redirect(url_for('home'))
