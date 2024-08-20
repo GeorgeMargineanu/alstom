@@ -6,9 +6,11 @@
           content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Dashboard</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
-  <h1>Hello you are logged in.</h1>
-    <a href="{{url_for('logout')}}">Press here to logout</a>
+    <h1>Hello you are logged in.</h1>
+     <h2>here we display the info</h2>
+     <div class="top-right"><a href="{{url_for('logout')}}">Press here to logout</a></div>
 </body>
 </html>
