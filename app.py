@@ -7,12 +7,8 @@ from flask_login import UserMixin, login_user, LoginManager, login_required, cur
 from flask_bcrypt import Bcrypt
 from flask_migrate import Migrate
 from flask_mail import Mail, Message
-<<<<<<< Updated upstream
 import datetime
-=======
 from itsdangerous import URLSafeTimedSerializer as Serializer
-
->>>>>>> Stashed changes
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
