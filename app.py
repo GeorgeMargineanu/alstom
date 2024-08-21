@@ -2,12 +2,13 @@ from flask import Flask, render_template, redirect, url_for, session, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, EmailField
-from wtforms.validators import DataRequired, ValidationError, Email
+from wtforms.validators import DataRequired, ValidationError, Email, EqualTo
 from flask_login import UserMixin, login_user, LoginManager, login_required, current_user, logout_user
 from flask_bcrypt import Bcrypt
 from flask_migrate import Migrate
 from flask_mail import Mail, Message
 import datetime
+import jwt
 from itsdangerous import URLSafeTimedSerializer as Serializer
 
 app = Flask(__name__)
@@ -41,19 +42,21 @@ class User(db.Model, UserMixin):
     confirmed_on = db.Column(db.DateTime, nullable=True)
     user_type = db.Column(db.String(150), nullable=False)
 
-    def get_reset_token(self, expires_sec=1800):
-        s = Serializer(app.config['SECRET_KEY'], expires_sec)
-        return s.dumps({'user_id': self.id})
+    def get_reset_token(self, expires_seconds=1800):
+        token = jwt.encode(
+            {'reset_password': self.id, 'exp': datetime.datetime.utcnow() + datetime.timedelta(seconds=expires_seconds)},
+            app.config['SECRET_KEY'],
+            algorithm='HS256'
+        )
+        return token
 
     @staticmethod
     def verify_reset_token(token):
-        s = Serializer(app.config['SECRET_KEY'])
         try:
-            user_id = s.loads(token, max_age=1800)['user_id']
+            user_id = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])['reset_password']
         except:
             return None
         return User.query.get(user_id)
-
 
 class RecoveryForm(FlaskForm):
     email = EmailField('Email', validators=[DataRequired(), Email()])
@@ -62,12 +65,8 @@ class RecoveryForm(FlaskForm):
 
 class ResetPasswordForm(FlaskForm):
     password = PasswordField('New Password', validators=[DataRequired()])
-    confirm_password = PasswordField('Confirm Password', validators=[DataRequired()])
+    confirm_password = PasswordField('Confirm Password', validators=[DataRequired(), EqualTo('password')])
     submit = SubmitField('Reset Password')
-
-    def validate_password(self, password):
-        if self.password.data != self.confirm_password.data:
-            raise ValidationError('Passwords must match.')
 
 class RegistrationForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired()])
@@ -86,7 +85,6 @@ class RegistrationForm(FlaskForm):
         if '@alstom' not in email.data:
             raise ValidationError("You are not authorized to create an account!")
         
-
 class LoginForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired()])
     password = PasswordField('Password', validators=[DataRequired()])
