@@ -17,6 +17,15 @@ body {
     margin: auto; /* Center the container horizontally */
 }
 
+.container {
+    background: rgb(132, 171, 191);
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    width: 400px;
+    max-width: 90%;
+}
+
 .form-group {
     margin-bottom: 15px; /* Adds space between form fields */
 }
@@ -60,11 +69,36 @@ input[type="submit"]:hover {
     width: 100%; /* Ensures it spans the full width of the login container */
 }
 
+.back-link {
+    display: inline-block;
+    margin-top: 20px;
+    text-align: center;
+    background-color: #28a745;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 5px;
+    text-decoration: none;
+    transition: background-color 0.3s, transform 0.2s;
+}
+
+.back-link:hover {
+    background-color: #218838;
+    transform: translateY(-2px);
+}
+
 .flashes {
     margin: 0;            /* Remove any default margins */
     padding: 0;           /* Remove any default padding */
     list-style: none;     /* Remove bullet points */
     text-align: center;   /* Center text within the flashes container */
+}
+
+.text-area {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    resize: vertical; /* Allows users to resize the text area vertically */
 }
 
 .recover_container{

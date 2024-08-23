@@ -7,6 +7,7 @@ from flask_login import UserMixin, login_user, LoginManager, login_required, cur
 from flask_bcrypt import Bcrypt
 from flask_migrate import Migrate
 from flask_mail import Mail, Message
+from wtforms.fields import FieldList
 import datetime
 import jwt
 from itsdangerous import URLSafeTimedSerializer as Serializer
@@ -105,7 +106,7 @@ def dashboard():
     return render_template('dashboard.html')
 
 class MessageForm(FlaskForm):
-    content = TextAreaField('Message', validators=[DataRequired()])
+    content = FieldList(TextAreaField('Message', validators=[DataRequired()]), min_entries=3)  # Adjust min_entries as needed
     submit = SubmitField('Send')
 
 @app.route('/logout', methods=['GET', 'POST'])
@@ -124,11 +125,16 @@ def some_view():
 def send_message():
     form = MessageForm()
     if form.validate_on_submit():
-        new_message = Message(content=form.content.data, user_id=current_user.id)
-        db.session.add(new_message)
+        # Iterate over each content in form.contents.data
+        for content in form.contents.data:
+            if content:  # Check if content is not empty
+                new_message = Message(content=content, user_id=current_user.id)
+                db.session.add(new_message)
         db.session.commit()
-        flash('Message sent!', 'success')
+        flash('Messages sent!', 'success')  # Optional: Uncomment if you want a flash message
         return redirect(url_for('some_view'))
+    
+    # Render the template with the form
     return render_template('send_message.html', form=form)
 
 @app.route('/messages')
@@ -163,7 +169,6 @@ If you did not make this request, simply ignore this email and no changes will b
 
     return render_template('recover.html', form=form)
 
-
 @app.route('/reset_password/<token>', methods=['GET', 'POST'])
 def reset_token(token):
     user = User.verify_reset_token(token)
@@ -180,7 +185,6 @@ def reset_token(token):
         return redirect(url_for('login'))
 
     return render_template('reset_token.html', form=form)
-
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
