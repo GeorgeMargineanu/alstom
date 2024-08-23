@@ -1,7 +1,7 @@
 from flask import Flask, render_template, redirect, url_for, session, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, EmailField
+from wtforms import StringField, PasswordField, SubmitField, EmailField, TextAreaField
 from wtforms.validators import DataRequired, ValidationError, Email, EqualTo
 from flask_login import UserMixin, login_user, LoginManager, login_required, current_user, logout_user
 from flask_bcrypt import Bcrypt
@@ -57,11 +57,21 @@ class User(db.Model, UserMixin):
         except:
             return None
         return User.query.get(user_id)
+    
+class Message(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    content = db.Column(db.Text, nullable=False)
+    timestamp = db.Column(db.DateTime, default=datetime.datetime.utcnow, nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
+class LoginForm(FlaskForm):
+    username = StringField('Username', validators=[DataRequired()])
+    password = PasswordField('Password', validators=[DataRequired()])
+    submit = SubmitField('Login')
 
 class RecoveryForm(FlaskForm):
     email = EmailField('Email', validators=[DataRequired(), Email()])
     submit = SubmitField('Recover')
-
 
 class ResetPasswordForm(FlaskForm):
     password = PasswordField('New Password', validators=[DataRequired()])
@@ -84,11 +94,6 @@ class RegistrationForm(FlaskForm):
     def validate_email(self, email):
         if '@alstom' not in email.data:
             raise ValidationError("You are not authorized to create an account!")
-        
-class LoginForm(FlaskForm):
-    username = StringField('Username', validators=[DataRequired()])
-    password = PasswordField('Password', validators=[DataRequired()])
-    submit = SubmitField('Login')
 
 @app.route('/')
 def home():
@@ -99,15 +104,38 @@ def home():
 def dashboard():
     return render_template('dashboard.html')
 
-@app.route('/welcome')
-def welcome():
-    return render_template('welcome.html')
+class MessageForm(FlaskForm):
+    content = TextAreaField('Message', validators=[DataRequired()])
+    submit = SubmitField('Send')
 
 @app.route('/logout', methods=['GET', 'POST'])
 @login_required
 def logout():
     logout_user()
     return redirect(url_for('home'))
+
+@app.route('/message_sent')
+@login_required
+def some_view():
+    return render_template('message_sent.html')
+
+@app.route('/send_message', methods=['GET', 'POST'])
+@login_required
+def send_message():
+    form = MessageForm()
+    if form.validate_on_submit():
+        new_message = Message(content=form.content.data, user_id=current_user.id)
+        db.session.add(new_message)
+        db.session.commit()
+        flash('Message sent!', 'success')
+        return redirect(url_for('some_view'))
+    return render_template('send_message.html', form=form)
+
+@app.route('/messages')
+@login_required
+def messages():
+    user_messages = Message.query.filter_by(user_id=current_user.id).all()
+    return render_template('messages.html', messages=user_messages)
 
 @app.route('/recover_password', methods=['GET', 'POST'])
 def recover_password():
@@ -165,7 +193,7 @@ def login():
         if user and bcrypt.check_password_hash(user.password, form.password.data):
             login_user(user, remember=True)
             session['failed_logins'] = 0  # Reset failed login counter on success
-            return redirect(url_for('dashboard'))
+            return redirect(url_for('send_message'))
         else:
             session['failed_logins'] += 1
             flash('Invalid username or password', 'danger')
