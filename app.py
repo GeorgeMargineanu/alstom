@@ -68,6 +68,11 @@ class UserAnswer(db.Model):
     answer = db.Column(db.String(250), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
+class AdditionalText(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    message = db.Column(db.String(500), nullable=False)  # Adjust size as needed
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
 class QuestionForm(FlaskForm):
     answer = RadioField('', choices=[
         ('😊', 'Happy'),    # Smiley Face
@@ -76,7 +81,8 @@ class QuestionForm(FlaskForm):
     ], validators=[DataRequired()])
 
 class MultiQuestionForm(FlaskForm):
-    questions = FieldList(FormField(QuestionForm), min_entries=5)  # Change this to the number of questions you have
+    questions = FieldList(FormField(QuestionForm), min_entries=5)  # Adjust min_entries as needed
+    additional_text = TextAreaField('Additional Comments', validators=[DataRequired()])  # Ensure this field is present
     submit = SubmitField('Submit All')
 
 class LoginForm(FlaskForm):
@@ -145,40 +151,75 @@ def questions():
         "Do you think that what was agreed upon till now in the team was respected?",
     ]
 
+    # Initialize form
     form = MultiQuestionForm()
 
     if form.validate_on_submit():
         print("Form validated successfully!")
-        
-        for i, question_form in enumerate(form.questions):
-            selected_answer = question_form.answer.data  # Get the selected answer
-            
-            if selected_answer:  # Only store if an answer is selected
-                print(f"Selected Answer for Question {i + 1}: {selected_answer}")
 
+        for i, question_form in enumerate(form.questions):
+            selected_answer = question_form.answer.data
+            
+            if selected_answer:
                 user_answer = UserAnswer(
-                    question=questions_list[i],  # Make sure this is the correct question
+                    question=questions_list[i],
                     answer=selected_answer,
                     user_id=current_user.id
                 )
-                
-                print(f"Saving: {user_answer.question}, Answer: {user_answer.answer}, User ID: {user_answer.user_id}")
-                db.session.add(user_answer)  # Add to the session
+                db.session.add(user_answer)
+
+        # Handle additional text
+        additional_message = form.additional_text.data  # Get additional text input
+        if additional_message:
+            additional_text_entry = AdditionalText(
+                message=additional_message,
+                user_id=current_user.id
+            )
+            db.session.add(additional_text_entry)
 
         try:
             db.session.commit()
             flash('Your answers have been submitted!', 'success')
-            print("Answers committed to the database!")
+            print("Answers and additional text committed to the database!")
         except Exception as e:
             print(f"Error committing to the database: {e}")
 
         return redirect(url_for('dashboard'))
+
     else:
         print("Form validation failed.")
         print("Errors:", form.errors)
-    
+
     return render_template('questions.html', form=form, questions=questions_list)
+
+@app.route('/statistics', methods=['GET'])
+@login_required
+def statistics():
+    # Query all user answers
+    all_answers = UserAnswer.query.all()
     
+    # Initialize statistics dictionary
+    statistics = {
+        'total': len(all_answers),
+        'question_stats': {}
+    }
+    
+    # Process answers for each question
+    for question in questions_list:
+        # Filter answers for the specific question
+        question_answers = [answer for answer in all_answers if answer.question == question]
+        
+        # Count responses
+        counts = {
+            'happy': sum(1 for a in question_answers if a.answer == 'happy'),
+            'neutral': sum(1 for a in question_answers if a.answer == 'neutral'),
+            'sad': sum(1 for a in question_answers if a.answer == 'sad'),
+        }
+
+        statistics['question_stats'][question] = counts
+
+    return render_template('statistics.html', statistics=statistics)
+
 @app.route('/messages')
 @login_required
 def messages():

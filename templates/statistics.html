@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Statistics</title>
+  </head>
+  <body>
+    <h1>Feedback Statistics</h1>
+    <h2>Total Responses: {{ statistics.total }}</h2>
+    <h3>Questions Stats</h3>
+    <ul> {% for question, counts in statistics.question_stats.items() %} <li>
+        <strong>{{ question }}</strong>
+        <br> Happy: {{ counts.happy }}
+        <br> Neutral: {{ counts.neutral }}
+        <br> Sad: {{ counts.sad }}
+      </li> {% endfor %} </ul>
+    <a href="{{ url_for('questions') }}">Back to Questions</a>
+  </body>
+</html>
