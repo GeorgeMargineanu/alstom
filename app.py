@@ -174,11 +174,11 @@ def questions():
 
         try:
             db.session.commit()
-            flash('Your answers have been submitted!', 'success')
+            #flash('Your answers have been submitted!', 'success')
         except Exception as e:
             print(f"Error committing to the database: {e}")
 
-        return redirect(url_for('dashboard'))
+        return redirect(url_for('statistics'))
 
     return render_template('questions.html', form=form, questions=questions_list)
 
@@ -186,41 +186,41 @@ def questions():
 @login_required
 def statistics():
     all_answers = UserAnswer.query.all()
+    all_additional_texts = AdditionalText.query.filter_by(user_id=current_user.id).all()  # Get additional messages
+
     statistics = {
         'total': len(all_answers),
         'question_stats': {}
     }
-
+ 
     # Define emoji mappings
     emoji_mapping = {
         '😊': 'happy',
         '😐': 'neutral',
         '😞': 'sad'
     }
-
+ 
     # Process answers for each question
     for question in questions_list:
-        # Get answers for the specific question
         question_answers = [answer for answer in all_answers if answer.question == question]
-        
-        print(f"Question: {question}, Answers: {question_answers}")  # Debug print
-
+       
         # Count responses based on emojis
         counts = {
             'happy': sum(1 for a in question_answers if a.answer == '😊'),
             'neutral': sum(1 for a in question_answers if a.answer == '😐'),
             'sad': sum(1 for a in question_answers if a.answer == '😞'),
         }
-
+ 
         statistics['question_stats'][question] = counts
 
-    return render_template('statistics.html', statistics=statistics)
+    return render_template('statistics.html', statistics=statistics, additional_texts=all_additional_texts)
 
-@app.route('/messages')
+@app.route('/messages', methods=['GET'])
 @login_required
 def messages():
-    user_messages = Message.query.filter_by(user_id=current_user.id).all()
-    return render_template('messages.html', messages=user_messages)
+    # Query all additional messages from the current user
+    all_additional_texts = AdditionalText.query.filter_by(user_id=current_user.id).all()
+    return render_template('messages.html', additional_texts=all_additional_texts)
 
 @app.route('/recover_password', methods=['GET', 'POST'])
 def recover_password():
