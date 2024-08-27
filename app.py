@@ -186,7 +186,8 @@ def questions():
 @login_required
 def statistics():
     all_answers = UserAnswer.query.all()
-    all_additional_texts = AdditionalText.query.filter_by(user_id=current_user.id).all()  # Get additional messages
+    #all_additional_texts = AdditionalText.query.filter_by(user_id=current_user.id).all()  # this displays only the messages written by the user
+    all_additional_texts = AdditionalText.query.all() #This retrieves all the messages
 
     statistics = {
         'total': len(all_answers),
