@@ -1,0 +1,10 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>Questions</title><link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}"></head><body><h1>Please Answer the Following Questions</h1><form method="POST" class="form-container">
+    {{ form.hidden_tag() }}
+    <div class="questions-wrapper">
+        {% for question in questions %}
+            <div class="question-container"><div class="question"><strong>Question {{ loop.index }}:</strong> {{ question }}
+                </div><div class="answers"><div class="radio-container"><input type="radio" id="question_{{ loop.index }}_0" name="questions-{{ loop.index }}-answer" value="😊" required><label for="question_{{ loop.index }}_0">😊</label><input type="radio" id="question_{{ loop.index }}_1" name="questions-{{ loop.index }}-answer" value="😐" required><label for="question_{{ loop.index }}_1">😐</label><input type="radio" id="question_{{ loop.index }}_2" name="questions-{{ loop.index }}-answer" value="😞" required><label for="question_{{ loop.index }}_2">😞</label></div></div></div>
+        {% endfor %}
+    </div><div class="submit-container">
+        {{ form.submit() }}
+    </div></form></body></html>

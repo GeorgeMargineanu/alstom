@@ -1,11 +1,11 @@
-<!-- templates/send_message.html --><!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Send Message</title><link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}"></head><body><div class="container"><h1>Send a Message</h1><form method="POST" action="">
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Send Message</title><link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}"></head><body><div class="container"><h1>Send Your Answers</h1><form method="POST" action="">
     {{ form.hidden_tag() }}
-    {% for field in form.contents %}
-        <div class="form-group">
-            {{ field.label }}<br>
-            {{ field(rows=5, cols=40, class="text-area") }}<br>
-            {% for error in field.errors %}
-                <span class="error-list">{{ error }}</span>
+    {% for question_form, question in zip(form.questions, questions) %}
+        <div class="form-group"><label>{{ question['question'] }}</label><br>
+            {% for choice in question_form.answer.choices %}
+                <label><input type="radio" name="{{ question_form.answer.name }}" value="{{ choice[0] }}">
+                    {{ choice[1] }}
+                </label><br>
             {% endfor %}
         </div>
     {% endfor %}

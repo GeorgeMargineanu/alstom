@@ -1,7 +1,7 @@
 from flask import Flask, render_template, redirect, url_for, session, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, EmailField, TextAreaField
+from wtforms import StringField, PasswordField, SubmitField, EmailField, TextAreaField, RadioField, FormField
 from wtforms.validators import DataRequired, ValidationError, Email, EqualTo
 from flask_login import UserMixin, login_user, LoginManager, login_required, current_user, logout_user
 from flask_bcrypt import Bcrypt
@@ -11,6 +11,7 @@ from wtforms.fields import FieldList
 import datetime
 import jwt
 from itsdangerous import URLSafeTimedSerializer as Serializer
+from flask_wtf.csrf import CSRFProtect
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
@@ -28,11 +29,13 @@ app.config['MAIL_USERNAME'] = 'georgemargineanu20@gmail.com'
 app.config['MAIL_PASSWORD'] = 'dujo jgcj cdjc ulux'
 app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USE_SSL'] = False
+#app.config['WTF_CSRF_ENABLED'] = False #disable CSRF only for debug purposes
+csrf = CSRFProtect(app)  # Add this line to set up CSRF protection
 mail = Mail(app)
 
 @login_manager.user_loader
 def load_user(user_id):
-    return User.query.get(int(user_id))
+    return db.session.get(User, int(user_id))
 
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
@@ -59,11 +62,22 @@ class User(db.Model, UserMixin):
             return None
         return User.query.get(user_id)
     
-class Message(db.Model):
+class UserAnswer(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    content = db.Column(db.Text, nullable=False)
-    timestamp = db.Column(db.DateTime, default=datetime.datetime.utcnow, nullable=False)
+    question = db.Column(db.String(250), nullable=False)
+    answer = db.Column(db.String(250), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
+class QuestionForm(FlaskForm):
+    answer = RadioField('', choices=[
+        ('😊', 'Happy'),    # Smiley Face
+        ('😐', 'Neutral'),  # Neutral Face
+        ('😞', 'Sad')       # Sad Face
+    ], validators=[DataRequired()])
+
+class MultiQuestionForm(FlaskForm):
+    questions = FieldList(FormField(QuestionForm), min_entries=5)  # Change this to the number of questions you have
+    submit = SubmitField('Submit All')
 
 class LoginForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired()])
@@ -106,7 +120,7 @@ def dashboard():
     return render_template('dashboard.html')
 
 class MessageForm(FlaskForm):
-    content = FieldList(TextAreaField('Message', validators=[DataRequired()]), min_entries=3)  # Adjust min_entries as needed
+    contents = FieldList(TextAreaField('Message', validators=[DataRequired()]), min_entries=3)  # Example of multiple text areas
     submit = SubmitField('Send')
 
 @app.route('/logout', methods=['GET', 'POST'])
@@ -120,23 +134,51 @@ def logout():
 def some_view():
     return render_template('message_sent.html')
 
-@app.route('/send_message', methods=['GET', 'POST'])
+@app.route('/questions', methods=['GET', 'POST'])
 @login_required
-def send_message():
-    form = MessageForm()
-    if form.validate_on_submit():
-        # Iterate over each content in form.contents.data
-        for content in form.contents.data:
-            if content:  # Check if content is not empty
-                new_message = Message(content=content, user_id=current_user.id)
-                db.session.add(new_message)
-        db.session.commit()
-        flash('Messages sent!', 'success')  # Optional: Uncomment if you want a flash message
-        return redirect(url_for('some_view'))
-    
-    # Render the template with the form
-    return render_template('send_message.html', form=form)
+def questions():
+    questions_list = [
+        "Project tasks are followed in the weekly report?",
+        "Additional tasks are followed in the weekly report?",
+        "Do you think we are at least at 75% of the milestone proposed related to the 'mirror of our activity'?",
+        "Is it useful for you to have completed data in the weekly report?",
+        "Do you think that what was agreed upon till now in the team was respected?",
+    ]
 
+    form = MultiQuestionForm()
+
+    if form.validate_on_submit():
+        print("Form validated successfully!")
+        
+        for i, question_form in enumerate(form.questions):
+            selected_answer = question_form.answer.data  # Get the selected answer
+            
+            if selected_answer:  # Only store if an answer is selected
+                print(f"Selected Answer for Question {i + 1}: {selected_answer}")
+
+                user_answer = UserAnswer(
+                    question=questions_list[i],  # Make sure this is the correct question
+                    answer=selected_answer,
+                    user_id=current_user.id
+                )
+                
+                print(f"Saving: {user_answer.question}, Answer: {user_answer.answer}, User ID: {user_answer.user_id}")
+                db.session.add(user_answer)  # Add to the session
+
+        try:
+            db.session.commit()
+            flash('Your answers have been submitted!', 'success')
+            print("Answers committed to the database!")
+        except Exception as e:
+            print(f"Error committing to the database: {e}")
+
+        return redirect(url_for('dashboard'))
+    else:
+        print("Form validation failed.")
+        print("Errors:", form.errors)
+    
+    return render_template('questions.html', form=form, questions=questions_list)
+    
 @app.route('/messages')
 @login_required
 def messages():
@@ -166,6 +208,7 @@ If you did not make this request, simply ignore this email and no changes will b
             return redirect(url_for('login'))
         else:
             flash('No account found with that email.', 'danger')
+
 
     return render_template('recover.html', form=form)
 
@@ -197,7 +240,7 @@ def login():
         if user and bcrypt.check_password_hash(user.password, form.password.data):
             login_user(user, remember=True)
             session['failed_logins'] = 0  # Reset failed login counter on success
-            return redirect(url_for('send_message'))
+            return redirect(url_for('questions'))
         else:
             session['failed_logins'] += 1
             flash('Invalid username or password', 'danger')

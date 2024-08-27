@@ -1,16 +1,7 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register</title>
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
-    </head>
-    <body>
-    <div class="login-container">  <!-- Added a wrapper for styling -->
-        <h2>Register</h2>
-        <form method="POST">
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Register</title><link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}"></head><body><div class="form-container"><h2>Join Us!</h2><p>Create a new account to get started!</p><form method="POST">
     {{ form.hidden_tag() }}
 
-    <!-- Username Field -->
-    <div class="form-group">
+    <!-- Username Field --><div class="form-group">
         {{ form.username.label }}<br>
         {{ form.username(size=32) }}
         {% if form.username.errors %}
@@ -40,12 +31,6 @@
                 {% endfor %}
             </ul>
         {% endif %}
-    </div>
-    <!-- Submit Button -->
-    <div>
+    </div><!-- Submit Button --><div>
         {{ form.submit() }}
-    </div>
-</form>
-</div>
-</body>
-</html>
+    </div></form></div></body></html>

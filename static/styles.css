@@ -1,124 +1,120 @@
+/* Base Styles */
 body {
     font-family: Arial, sans-serif;
-    background-color: #f4f4f4;
+    background-color: #f4f4f4; /* Light gray background */
     display: flex;
-    justify-content: center;
+    flex-direction: column;
     align-items: center;
-    height: 100vh;
+    justify-content: flex-start; /* Align items at the top */
+    min-height: 100vh; /* Full height */
     margin: 0;
+    padding: 20px; /* Add padding for space */
 }
 
-.login-container {
-    background: rgb(132, 171, 191);
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(236, 53, 53, 0.1);
-    width: 300px;
-    margin: auto; /* Center the container horizontally */
+h1, h2 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 20px;
 }
 
-.container {
-    background: rgb(132, 171, 191);
+/* Container Styles */
+.form-container {
+    background: rgb(132, 171, 191); /* Light blue background */
     padding: 30px;
     border-radius: 8px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-    width: 400px;
-    max-width: 90%;
+    width: 90%; /* Full width */
+    max-width: 500px; /* Keep it reasonable */
+    margin: auto; /* Center the container */
 }
 
-.form-group {
-    margin-bottom: 15px; /* Adds space between form fields */
-}
-
-/* Styles for error messages */
-.error-list {
-    color: red; /* Red color for error messages */
-    list-style-type: none; /* No bullet points */
-    padding: 0; /* No padding */
-    margin: 5px 0 0 0; /* Margin to separate from input field */
-}
-
+/* Form Styles */
 form {
     display: flex;
     flex-direction: column;
 }
 
-input[type="text"], input[type="password"] {
+/* Input and Button Styles */
+input[type="text"],
+input[type="password"],
+.text-area {
     margin-bottom: 15px;
-    padding: 10px;
+    padding: 12px; /* Increased padding for comfort */
     border: 1px solid #ddd;
     border-radius: 4px;
+    width: 100%; /* Full width for text inputs */
+    font-size: 16px; /* Slightly larger font size */
 }
 
+/* Submit Button Styles */
 input[type="submit"] {
-    padding: 10px;
-    background-color: #007BFF;
+    padding: 12px;
+    background-color: #007BFF; /* Blue button */
     color: white;
     border: none;
     border-radius: 4px;
     cursor: pointer;
+    margin-top: 20px; /* Space above the button */
+    font-size: 16px; /* Larger text for the button */
+    transition: background-color 0.3s; /* Smooth transition */
 }
 
 input[type="submit"]:hover {
-    background-color: #0056b3;
+    background-color: #0056b3; /* Darker blue on hover */
 }
 
-.register-link {
-    text-align: center;
-    margin-top: 20px;
-    width: 100%; /* Ensures it spans the full width of the login container */
+/* Question Container Styles */
+.question-container {
+    padding: 15px;
+    border: 1px solid #ddd; /* Clear border */
+    border-radius: 4px; /* Rounded corners */
+    margin-bottom: 20px; /* Space between questions */
 }
 
-.back-link {
+/* Radio Button Styles */
+.radio-container {
+    display: flex;
+    justify-content: space-between; /* Space evenly between emojis */
+    margin-top: 10px; /* Clearly separate from question */
+}
+
+/* Hide radio buttons */
+input[type="radio"] {
+    display: none; /* Hide default controls */
+}
+
+/* Emoji Display for Radio Buttons */
+.radio-container label {
+    cursor: pointer; /* Pointer cursor for labels */
+    font-size: 24px; /* Size of emojis */
+    padding: 10px; /* Add padding around labels */
+    border: 2px solid transparent; /* Initial state border to enhance active state */
+}
+
+input[type="radio"]:checked + label {
+    border-color: #007BFF; /* Highlight selected emoji */
+    background-color: #e0f7ff; /* Change background to indicate selection */
+    border-radius: 5px; /* Rounded corners for better UI */
+}
+
+/* Error Message Styles */
+.error-list {
+    color: red; /* Error message color */
+    list-style-type: none; /* Remove bullet points */
+    padding: 0;
+    margin: 5px 0 0 0; /* Margin to separate from input field */
+}
+
+/* Link Styles */
+a {
     display: inline-block;
-    margin-top: 20px;
     text-align: center;
-    background-color: #28a745;
-    color: white;
     padding: 10px 20px;
+    margin: 10px;
+    background-color: #28a745; /* Green background */
+    color: white;
     border-radius: 5px;
     text-decoration: none;
-    transition: background-color 0.3s, transform 0.2s;
-}
-
-.back-link:hover {
-    background-color: #218838;
-    transform: translateY(-2px);
-}
-
-.flashes {
-    margin: 0;            /* Remove any default margins */
-    padding: 0;           /* Remove any default padding */
-    list-style: none;     /* Remove bullet points */
-    text-align: center;   /* Center text within the flashes container */
-}
-
-.text-area {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    resize: vertical; /* Allows users to resize the text area vertically */
-}
-
-.recover_container{
-    background: rgb(132, 171, 191);
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(236, 53, 53, 0.1);
-    width: 300px;
-}
-
-/* Additional styles for the buttons */
-a {
-    display: inline-block; /* Makes the links look like buttons */
-    text-align: center;    /* Centers the text in the button */
-    padding: 10px 20px;    /* Adds padding */
-    margin: 10px;          /* Adds margin between buttons */
-    background-color: #28a745; /* Green background for the buttons */
-    color: white;          /* White text color */
-    border-radius: 5px;   /* Rounded corners */
-    text-decoration: none; /* Remove underline from links */
     transition: background-color 0.3s, transform 0.2s; /* Smooth transitions */
 }
 
@@ -127,23 +123,7 @@ a:hover {
     transform: translateY(-2px); /* Lift effect on hover */
 }
 
-a:active {
-    transform: translateY(0); /* Return to normal when clicked */
-}
-
-h1 {
-    text-align: center;
-    color: #333;
-}
-
-.Pagetitle {
-    text-align: center;
-    position: absolute;
-    top: 100px;
-  }
-
-.top-right {
-    position: absolute;
-    top: 10px; /* Adjust as needed */
-    right: 10px; /* Adjust as needed */
+/* Additional Question Styles */
+.question {
+    margin-bottom: 10px; /* Space between question and answers */
 }
