@@ -140,26 +140,22 @@ def logout():
 def some_view():
     return render_template('message_sent.html')
 
+questions_list = [
+    "Project tasks are followed in the weekly report?",
+    "Additional tasks are followed in the weekly report?",
+    "Do you think we are at least at 75% of the milestone proposed related to the 'mirror of our activity'?",
+    "Is it useful for you to have completed data in the weekly report?",
+    "Do you think that what was agreed upon till now in the team was respected?",
+]
+
 @app.route('/questions', methods=['GET', 'POST'])
 @login_required
 def questions():
-    questions_list = [
-        "Project tasks are followed in the weekly report?",
-        "Additional tasks are followed in the weekly report?",
-        "Do you think we are at least at 75% of the milestone proposed related to the 'mirror of our activity'?",
-        "Is it useful for you to have completed data in the weekly report?",
-        "Do you think that what was agreed upon till now in the team was respected?",
-    ]
-
-    # Initialize form
     form = MultiQuestionForm()
 
     if form.validate_on_submit():
-        print("Form validated successfully!")
-
         for i, question_form in enumerate(form.questions):
             selected_answer = question_form.answer.data
-            
             if selected_answer:
                 user_answer = UserAnswer(
                     question=questions_list[i],
@@ -168,8 +164,7 @@ def questions():
                 )
                 db.session.add(user_answer)
 
-        # Handle additional text
-        additional_message = form.additional_text.data  # Get additional text input
+        additional_message = form.additional_text.data 
         if additional_message:
             additional_text_entry = AdditionalText(
                 message=additional_message,
@@ -180,40 +175,41 @@ def questions():
         try:
             db.session.commit()
             flash('Your answers have been submitted!', 'success')
-            print("Answers and additional text committed to the database!")
         except Exception as e:
             print(f"Error committing to the database: {e}")
 
         return redirect(url_for('dashboard'))
-
-    else:
-        print("Form validation failed.")
-        print("Errors:", form.errors)
 
     return render_template('questions.html', form=form, questions=questions_list)
 
 @app.route('/statistics', methods=['GET'])
 @login_required
 def statistics():
-    # Query all user answers
     all_answers = UserAnswer.query.all()
-    
-    # Initialize statistics dictionary
     statistics = {
         'total': len(all_answers),
         'question_stats': {}
     }
-    
+
+    # Define emoji mappings
+    emoji_mapping = {
+        '😊': 'happy',
+        '😐': 'neutral',
+        '😞': 'sad'
+    }
+
     # Process answers for each question
     for question in questions_list:
-        # Filter answers for the specific question
+        # Get answers for the specific question
         question_answers = [answer for answer in all_answers if answer.question == question]
         
-        # Count responses
+        print(f"Question: {question}, Answers: {question_answers}")  # Debug print
+
+        # Count responses based on emojis
         counts = {
-            'happy': sum(1 for a in question_answers if a.answer == 'happy'),
-            'neutral': sum(1 for a in question_answers if a.answer == 'neutral'),
-            'sad': sum(1 for a in question_answers if a.answer == 'sad'),
+            'happy': sum(1 for a in question_answers if a.answer == '😊'),
+            'neutral': sum(1 for a in question_answers if a.answer == '😐'),
+            'sad': sum(1 for a in question_answers if a.answer == '😞'),
         }
 
         statistics['question_stats'][question] = counts
