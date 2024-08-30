@@ -182,6 +182,29 @@ def questions():
 
     return render_template('questions.html', form=form, questions=questions_list)
 
+@app.route('/admin/statistics', methods=['GET'])
+@login_required
+def admin_statistics():
+    if current_user.user_type != 'Admin':
+        return redirect(url_for('statistics'))
+    
+    all_answers = UserAnswer.query.all()
+    all_users = {user.id: user.username for user in User.query.all()}
+
+    # Reorganize statistics for unique questions
+    statistics = {}
+    for answer in all_answers:
+        question = answer.question
+        username = all_users.get(answer.user_id, 'Unknown')
+        vote = answer.answer
+        
+        if question not in statistics:
+            statistics[question] = {user: 'No Vote' for user in all_users.values()}  # Initialize with no votes
+        
+        statistics[question][username] = vote  # Update the vote for the specific user
+
+    return render_template('admin_statistics.html', statistics=statistics, all_users=all_users)
+
 @app.route('/statistics', methods=['GET'])
 @login_required
 def statistics():
