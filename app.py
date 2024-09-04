@@ -243,7 +243,6 @@ def statistics():
 @login_required
 def messages():
     # Query all additional messages from the current user
-    #all_additional_texts = AdditionalText.query.filter_by(user_id=current_user.id).all()
     all_additional_texts = AdditionalText.query.all()
     return render_template('messages.html', additional_texts=all_additional_texts)
 

@@ -1,53 +1,87 @@
-<!DOCTYPE html><html><head><title>Admin Statistics</title><style>
-    body {
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Admin Statistics</title>
+    <style>
+      body {
         font-family: Arial, sans-serif;
-        background-color: #f8f9fa; /* Light background for contrast */
+        background-color: #f8f9fa;
+        /* Light background for contrast */
         margin: 20px;
-    }
-    h1 {
+      }
+
+      h1 {
         text-align: center;
-        color: #343a40; /* Dark gray text */
-    }
-    table {
+        color: #343a40;
+        /* Dark gray text */
+      }
+
+      table {
         width: 100%;
         border-collapse: collapse;
         margin-top: 20px;
-    }
-    th, td {
+      }
+
+      th,
+      td {
         padding: 10px;
         text-align: left;
         border: 1px solid #ddd;
+      }
+
+      th {
+        background-color: #007bff;
+        /* Bootstrap primary color */
+        color: white;
+        /* White text for headers */
+        text-transform: uppercase;
+        /* Uppercase header text for emphasis */
+      }
+
+      tr:nth-child(even) {
+        background-color: #f2f2f2;
+        /* Zebra striping for rows */
+      }
+
+      tr:hover {
+        background-color: #e9ecef;
+        /* Light hover effect */
+      }
+
+      .header-row {
+        background-color: #0056b3;
+        /* Darker blue for header row */
+      }
+
+      .emoji {
+        font-size: 24px;
+        /* Increased font size for emojis */
+      }
+      a {
+        display: inline-block;
+        text-align: center;
+        padding: 10px 20px;
+        margin: 10px;
+        background-color: #28a745; /* Green background */
+        color: white;
+        border-radius: 5px;
+        text-decoration: none;
     }
-    th {
-        background-color: #007bff; /* Bootstrap primary color */
-        color: white; /* White text for headers */
-        text-transform: uppercase; /* Uppercase header text for emphasis */
-    }
-    tr:nth-child(even) {
-        background-color: #f2f2f2; /* Zebra striping for rows */
-    }
-    tr:hover {
-        background-color: #e9ecef; /* Light hover effect */
-    }
-    .header-row {
-        background-color: #0056b3; /* Darker blue for header row */
-    }
-    .emoji {
-        font-size: 24px; /* Increased font size for emojis */
-    }
-</style></head><body><h1>User Votes</h1><table><thead><tr class="header-row"><th>Question</th>
-            {% for username in all_users.values() %}
-                <th>{{ username }}</th>
-            {% endfor %}
-        </tr></thead><tbody>
-        {% for question, votes in statistics.items() %}
-            <tr><td>{{ question }}</td>
-                {% for user in all_users.values() %}
-                    <td class="emoji">{{ votes[user] if votes[user] != 'No Vote' else 'No Vote' }}</td>
-                {% endfor %}
-            </tr>
-        {% endfor %}
-    </tbody></table>
-</ul>
-<a href="{{ url_for('logout') }}">Logout</a>
-</body></html>
+    </style>
+  </head>
+  <body>
+    <h1>User Votes</h1>
+    <table>
+      <thead>
+        <tr class="header-row">
+          <th>Question</th> {% for username in all_users.values() %} <th>{{ username }}</th> {% endfor %}
+        </tr>
+      </thead>
+      <tbody> {% for question, votes in statistics.items() %} <tr>
+          <td>{{ question }}</td> {% for user in all_users.values() %} <td class="emoji">{{ votes[user] if votes[user] != 'No Vote' else 'No Vote' }}</td> {% endfor %}
+        </tr> {% endfor %} </tbody>
+    </table>
+    </ul>
+    <a href="{{ url_for('logout') }}">Logout</a>
+  </body>
+</html>
