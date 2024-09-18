@@ -1,37 +1,170 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
+<head>
     <meta charset="UTF-8">
     <title>Questions</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-  </head>
-  <body>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #343a40;
+        }
+
+        .form-container {
+            max-width: 900px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .questions-wrapper {
+            margin-bottom: 20px;
+        }
+
+        .question-container {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .question {
+            font-weight: bold;
+            margin-bottom: 10px;
+            word-wrap: break-word; /* Ensure long text wraps */
+            white-space: pre-wrap;  /* Preserve line breaks */
+            word-break: break-word; /* Handle breaking long words */
+        }
+
+        .answers {
+            margin-top: 10px;
+        }
+
+        .radio-container {
+            display: flex;
+            flex-wrap: wrap; /* Make the radio buttons wrap on smaller screens */
+            gap: 10px;
+        }
+
+        .radio-container label {
+            margin-right: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .submit-container {
+            text-align: center;
+        }
+
+        input[type="radio"] {
+            margin-right: 5px;
+        }
+
+        textarea {
+            width: 100%;
+            max-width: 100%;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .error-list {
+            color: red;
+            font-size: 0.9em;
+            list-style-type: none;
+            padding-left: 0;
+        }
+
+        input[type="submit"] {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        input[type="submit"]:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
     <h1>Please Answer the Following Questions</h1>
     <form method="POST" class="form-container">
-      {{ form.hidden_tag() }}
-      <div class="questions-wrapper"> {% for question in questions %} <div class="question-container">
-          <div class="question">
-            <strong>Question {{ loop.index }}:</strong> {{ question.text }}
-            <!-- Displaying the question text -->
-          </div>
-          <div class="answers">
-            <div class="radio-container">
-              <input type="radio" id="question_{{ loop.index }}_0" name="questions-{{ loop.index }}-answer" value="😊" required>
-              <label for="question_{{ loop.index }}_0">😊</label>
-              <input type="radio" id="question_{{ loop.index }}_1" name="questions-{{ loop.index }}-answer" value="😐" required>
-              <label for="question_{{ loop.index }}_1">😐</label>
-              <input type="radio" id="question_{{ loop.index }}_2" name="questions-{{ loop.index }}-answer" value="😞" required>
-              <label for="question_{{ loop.index }}_2">😞</label>
+        {{ form.hidden_tag() }}
+
+        <div class="questions-wrapper">
+            {% for question in questions %}
+            <div class="question-container">
+                <div class="question"><strong>Question {{ loop.index }}:</strong> {{ question.text }}</div>
+                <div class="answers">
+                    <div class="radio-container">
+                        <input type="radio" id="question_{{ loop.index }}_1" name="questions-{{ loop.index }}-answer" value="1" required>
+                        <label for="question_{{ loop.index }}_1">1</label>
+
+                        <input type="radio" id="question_{{ loop.index }}_2" name="questions-{{ loop.index }}-answer" value="2" required>
+                        <label for="question_{{ loop.index }}_2">2</label>
+
+                        <input type="radio" id="question_{{ loop.index }}_3" name="questions-{{ loop.index }}-answer" value="3" required>
+                        <label for="question_{{ loop.index }}_3">3</label>
+
+                        <input type="radio" id="question_{{ loop.index }}_4" name="questions-{{ loop.index }}-answer" value="4" required>
+                        <label for="question_{{ loop.index }}_4">4</label>
+
+                        <input type="radio" id="question_{{ loop.index }}_5" name="questions-{{ loop.index }}-answer" value="5" required>
+                        <label for="question_{{ loop.index }}_5">5</label>
+
+                        <input type="radio" id="question_{{ loop.index }}_6" name="questions-{{ loop.index }}-answer" value="6" required>
+                        <label for="question_{{ loop.index }}_6">6</label>
+
+                        <input type="radio" id="question_{{ loop.index }}_7" name="questions-{{ loop.index }}-answer" value="7" required>
+                        <label for="question_{{ loop.index }}_7">7</label>
+
+                        <input type="radio" id="question_{{ loop.index }}_8" name="questions-{{ loop.index }}-answer" value="8" required>
+                        <label for="question_{{ loop.index }}_8">8</label>
+
+                        <input type="radio" id="question_{{ loop.index }}_9" name="questions-{{ loop.index }}-answer" value="9" required>
+                        <label for="question_{{ loop.index }}_9">9</label>
+
+                        <input type="radio" id="question_{{ loop.index }}_10" name="questions-{{ loop.index }}-answer" value="10" required>
+                        <label for="question_{{ loop.index }}_10">10</label>
+                    </div>
+                </div>
             </div>
-          </div>
-        </div> {% endfor %} </div>
-      <div class="form-group">
-        <label for="additional_text">Additional Comments</label>
-        {{ form.additional_text(rows=4, cols=50) }} {% if form.additional_text.errors %} <ul class="error-list"> {% for error in form.additional_text.errors %} <li>{{ error }}</li> {% endfor %} </ul> {% endif %}
-      </div>
-      <div class="submit-container">
-        {{ form.submit() }}
-      </div>
+            {% endfor %}
+        </div>
+
+        <div class="form-group">
+            <label for="additional_text">Additional Comments</label>
+            {{ form.additional_text(rows=4, cols=50) }}
+            {% if form.additional_text.errors %}
+                <ul class="error-list">
+                    {% for error in form.additional_text.errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </div>
+
+        <div class="submit-container">
+            {{ form.submit() }}
+        </div>
     </form>
-  </body>
+</body>
 </html>

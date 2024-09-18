@@ -4,86 +4,160 @@
     <title>Admin Statistics</title>
     <style>
       body {
-        font-family: Arial, sans-serif;
-        background-color: #f8f9fa;
-        /* Light background for contrast */
+        font-family: 'Helvetica Neue', Arial, sans-serif;
+        background-color: #f0f2f5;
         margin: 20px;
+        color: #343a40;
       }
 
       h1 {
         text-align: center;
-        color: #343a40;
-        /* Dark gray text */
+        color: #212529;
+        font-size: 2.5rem;
+        margin-bottom: 30px;
       }
 
       table {
         width: 100%;
-        border-collapse: collapse;
-        margin-top: 20px;
+        border-collapse: separate;
+        border-spacing: 0;
+        background-color: white;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        border-radius: 8px;
+        overflow: hidden;
+        margin-bottom: 30px;
+        table-layout: auto; /* Allow the question column to grow based on content */
       }
 
-      th,
-      td {
-        padding: 10px;
+      th, td {
+        padding: 15px;
         text-align: left;
-        border: 1px solid #ddd;
+        border-bottom: 1px solid #e0e0e0;
+        white-space: nowrap; /* Prevent text from wrapping in small columns */
+        overflow: hidden;
+        text-overflow: ellipsis; /* Add ellipsis for overflow text in small columns */
       }
 
       th {
         background-color: #007bff;
-        /* Bootstrap primary color */
         color: white;
-        /* White text for headers */
         text-transform: uppercase;
-        /* Uppercase header text for emphasis */
+        font-weight: bold;
+        letter-spacing: 0.05em;
       }
 
       tr:nth-child(even) {
-        background-color: #f2f2f2;
-        /* Zebra striping for rows */
+        background-color: #f8f9fa;
       }
 
       tr:hover {
-        background-color: #e9ecef;
-        /* Light hover effect */
+        background-color: #f1f3f5;
       }
 
-      .header-row {
+      .header-row th {
         background-color: #0056b3;
-        /* Darker blue for header row */
+      }
+
+      /* Ensure questions wrap */
+      .question {
+        max-width: 500px; /* Set a max width for question column */
+        white-space: normal; /* Allow text to wrap for long questions */
+        word-wrap: break-word; /* Break long words if needed */
+      }
+
+      .average {
+        width: 100px; /* Fix width for average column */
+        text-align: center;
       }
 
       .emoji {
-        font-size: 24px;
-        /* Increased font size for emojis */
+        width: 80px; /* Fix width for vote columns */
+        text-align: center;
+        font-size: 20px;
       }
+
       a {
         display: inline-block;
-        text-align: center;
-        padding: 10px 20px;
+        padding: 12px 25px;
         margin: 10px;
-        background-color: #28a745; /* Green background */
+        background-color: #28a745;
         color: white;
         border-radius: 5px;
         text-decoration: none;
-    }
+        font-size: 1rem;
+        transition: background-color 0.3s;
+      }
+
+      a:hover {
+        background-color: #218838;
+      }
+
+      .download-btn {
+        background-color: #007bff;
+        color: white;
+        padding: 12px 25px;
+        text-align: center;
+        margin-top: 20px;
+        border-radius: 5px;
+        text-decoration: none;
+        font-size: 1rem;
+        transition: background-color 0.3s;
+      }
+
+      .download-btn:hover {
+        background-color: #0056b3;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+
+      .btn-group {
+        text-align: center;
+        margin-bottom: 20px;
+      }
     </style>
   </head>
   <body>
-    <h1>User Votes</h1>
-    <table>
-      <thead>
-        <tr class="header-row">
-          <th>Question</th> {% for username in all_users.values() %} <th>{{ username }}</th> {% endfor %}
-        </tr>
-      </thead>
-      <tbody> {% for question, votes in statistics.items() %} <tr>
-          <td>{{ question }}</td> {% for user in all_users.values() %} <td class="emoji">{{ votes[user] if votes[user] != 'No Vote' else 'No Vote' }}</td> {% endfor %}
-        </tr> {% endfor %} </tbody>
-    </table>
-    </ul>
-    <a href="{{ url_for('logout') }}">Logout</a>
-    <a href="{{url_for('clean_database')}}">Clean Questions</a>
-    <a href="{{url_for('clean_database_answers')}}">Clean Answers</a>
+    <div class="container">
+      <h1>User Votes</h1>
+      
+      <table>
+        <thead>
+          <tr class="header-row">
+            <th class="question">Question</th> <!-- Ensure question column has flexible width -->
+            <th class="average">Average</th>
+            {% for username in all_users.values() %}
+              <th class="emoji">{{ username }}</th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for question, votes in statistics.items() %}
+          <tr>
+            <td class="question">{{ question }}</td> <!-- Apply the question class -->
+            <td class="average">{{ averages[question] if averages[question] != 'No Votes' else 'No Votes' }}</td>
+            {% for user in all_users.values() %}
+              <td class="emoji">{{ votes[user] if votes[user] != 'No Vote' else 'No Vote' }}</td>
+            {% endfor %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      <div class="btn-group">
+        <a href="{{ url_for('logout') }}">Logout</a>
+        <a href="{{url_for('clean_database')}}">Clean Questions</a>
+        <a href="{{url_for('clean_database_answers')}}">Clean Answers</a>
+        <a href="{{url_for('clean_database_messages')}}">Clean Messages</a>
+      </div>
+
+      <!-- Add the download Excel button -->
+      <div class="btn-group">
+        <a href="{{ url_for('download_statistics') }}" class="download-btn">Download Excel</a>
+      </div>
+    </div>
   </body>
 </html>

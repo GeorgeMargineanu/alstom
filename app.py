@@ -12,7 +12,9 @@ import datetime
 import jwt
 from itsdangerous import URLSafeTimedSerializer as Serializer
 from flask_wtf.csrf import CSRFProtect
-
+import pandas as pd
+from flask import send_file
+import io
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
@@ -81,12 +83,33 @@ class AdditionalText(db.Model):
     message = db.Column(db.String(500), nullable=False)  # Adjust size as needed
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
+"""
+ '1': 'Very Poor',
+        '2': 'Poor',
+        '3': 'Fair',
+        '4': 'Below average',
+        '5': 'Average',
+        '6': 'Good',
+        '7': 'Very Good',
+        '8': 'Excellent',
+        '9': 'Exceptional',
+        '10': 'Perfect'
+        """
+
 class QuestionForm(FlaskForm):
     answer = RadioField('', choices=[
-        ('😊', 'Happy'),    # Smiley Face
-        ('😐', 'Neutral'),  # Neutral Face
-        ('😞', 'Sad')       # Sad Face
+        ('1', 'Very Poor'),    # Smiley Face
+        ('2', 'Poor'),  # Neutral Face
+        ('3', 'Fair'),
+        ('4', 'Below average'),
+        ('5', 'Average'),
+        ('6', 'Good'),
+        ('7', 'Very Good'),
+        ('8', 'Excellent'),
+        ('9', 'Exceptional'),
+        ('10', 'Perfect'),      # Sad Face
     ], validators=[DataRequired()])
+
 
 class MultiQuestionForm(FlaskForm):
     questions = FieldList(FormField(QuestionForm), min_entries=5)  # Adjust min_entries as needed
@@ -97,6 +120,73 @@ class LoginForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired()])
     password = PasswordField('Password', validators=[DataRequired()])
     submit = SubmitField('Login')
+
+@app.route('/admin/download_statistics', methods=['GET'])
+@login_required
+def download_statistics():
+    if current_user.user_type != 'Admin':
+        flash('You do not have permission to perform this action', 'error')
+        return redirect(url_for('statistics'))
+
+    # Fetch the data needed for the Excel file
+    all_answers = UserAnswer.query.all()
+    all_users = {user.id: user.username for user in User.query.all()}
+
+    statistics = {}
+    vote_sums = {}
+    vote_counts = {}
+
+    # Process the answers to calculate votes and averages
+    for answer in all_answers:
+        question = answer.question
+        username = all_users.get(answer.user_id, 'Unknown')
+        vote = answer.answer
+        
+        if question not in statistics:
+            statistics[question] = {user: 'No Vote' for user in all_users.values()}
+            vote_sums[question] = 0
+            vote_counts[question] = 0
+        
+        # Update the vote for the specific user
+        statistics[question][username] = vote
+
+        # Convert vote to numeric if possible for averaging
+        try:
+            numeric_vote = float(vote)
+            vote_sums[question] += numeric_vote
+            vote_counts[question] += 1
+        except ValueError:
+            pass
+
+    # Calculate average votes for each question
+    averages = {}
+    for question, total in vote_sums.items():
+        count = vote_counts[question]
+        averages[question] = "{:.2f}".format(total / count) if count > 0 else 'No Votes'
+
+    # Create a pandas DataFrame to hold the data
+    # First column: Question, Second column: Average, followed by user votes
+    data = []
+    for question, votes in statistics.items():
+        row = [question, averages[question]]  # First two columns: Question and Average
+        row.extend(votes[user] for user in all_users.values())  # Append user votes
+        data.append(row)
+
+    # Create column headers
+    columns = ['Question', 'Average'] + [username for username in all_users.values()]
+
+    # Convert to DataFrame
+    df = pd.DataFrame(data, columns=columns)
+
+    # Save DataFrame to Excel
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        df.to_excel(writer, index=False, sheet_name='Statistics')
+
+    output.seek(0)  # Move the pointer to the beginning of the stream
+
+    # Send the file to the user for download
+    return send_file(output, as_attachment=True, download_name="statistics.xlsx", mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
 
 class RecoveryForm(FlaskForm):
     email = EmailField('Email', validators=[DataRequired(), Email()])
@@ -220,9 +310,12 @@ def admin_statistics():
     
     all_answers = UserAnswer.query.all()
     all_users = {user.id: user.username for user in User.query.all()}
-    print(all_answers, 'raspunsuri')
+    
     # Reorganize statistics for unique questions
     statistics = {}
+    vote_sums = {}
+    vote_counts = {}
+    
     for answer in all_answers:
         question = answer.question
         username = all_users.get(answer.user_id, 'Unknown')
@@ -230,10 +323,29 @@ def admin_statistics():
         
         if question not in statistics:
             statistics[question] = {user: 'No Vote' for user in all_users.values()}  # Initialize with no votes
+            vote_sums[question] = 0  # Sum of votes for average calculation
+            vote_counts[question] = 0  # Count of votes
         
-        statistics[question][username] = vote  # Update the vote for the specific user
+        # Update the vote for the specific user
+        statistics[question][username] = vote
+        
+        # Convert vote to numeric if possible
+        try:
+            numeric_vote = float(vote)  # Attempt to convert to float
+            vote_sums[question] += numeric_vote
+            vote_counts[question] += 1
+        except ValueError:
+            # If the vote is not a number, skip it
+            pass
+    
+    # Calculate average votes for each question
+    averages = {}
+    for question, total in vote_sums.items():
+        count = vote_counts[question]
+        averages[question] = "{:.2f}".format(total / count) if count > 0 else 'No Votes'
+    
+    return render_template('admin_statistics.html', statistics=statistics, all_users=all_users, averages=averages)
 
-    return render_template('admin_statistics.html', statistics=statistics, all_users=all_users)
 
 @app.route('/admin/clean_database', methods=['GET'])
 @login_required
@@ -275,6 +387,27 @@ def clean_database_answers():
         flash('No questions found to delete', 'info')
     return redirect(url_for('statistics'))
 
+
+@app.route('/admin/delete_messages', methods=['GET'])
+@login_required
+def clean_database_messages():
+    if current_user.user_type != 'Admin':
+        flash('You do not have permission to perform this action', 'error')
+        return redirect(url_for('statistics'))
+    
+    #Get all questions an delete them
+    all_answers = AdditionalText.query.all()
+
+    if all_answers:
+        for answer in all_answers:
+            db.session.delete(answer)
+        db.session.commit()
+        flash('All the questions have been deleted successfully', 'success')
+    
+    else:
+        flash('No questions found to delete', 'info')
+    return redirect(url_for('statistics'))
+
 @app.route('/statistics', methods=['GET'])
 @login_required
 def statistics():
@@ -286,14 +419,22 @@ def statistics():
     
     statistics = {
         'total': len(all_answers),
-        'question_stats': {}
+        'question_stats': {},
+        'averages': {}  # Store averages for each question
     }
 
     # Define emoji mappings
     emoji_mapping = {
-        '😊': 'happy',
-        '😐': 'neutral',
-        '😞': 'sad'
+        '1': 'Very Poor',
+        '2': 'Poor',
+        '3': 'Fair',
+        '4': 'Below average',
+        '5': 'Average',
+        '6': 'Good',
+        '7': 'Very Good',
+        '8': 'Excellent',
+        '9': 'Exceptional',
+        '10': 'Perfect'
     }
 
     # Process answers for each question
@@ -302,12 +443,33 @@ def statistics():
 
         # Count responses based on emojis
         counts = {
-            'happy': sum(1 for a in question_answers if a.answer == '😊'),
-            'neutral': sum(1 for a in question_answers if a.answer == '😐'),
-            'sad': sum(1 for a in question_answers if a.answer == '😞'),
+            'Very Poor': sum(1 for a in question_answers if a.answer == '1'),
+            'Poor': sum(1 for a in question_answers if a.answer == '2'),
+            'Fair': sum(1 for a in question_answers if a.answer == '3'),
+            'Below average': sum(1 for a in question_answers if a.answer == '4'),
+            'Average': sum(1 for a in question_answers if a.answer == '5'),
+            'Good': sum(1 for a in question_answers if a.answer == '6'),
+            'Very Good': sum(1 for a in question_answers if a.answer == '7'),
+            'Excellent': sum(1 for a in question_answers if a.answer == '8'),
+            'Exceptional': sum(1 for a in question_answers if a.answer == '9'),
+            'Perfect': sum(1 for a in question_answers if a.answer == '10'),
         }
 
         statistics['question_stats'][question.text] = counts  # Use question.text for the key
+
+        # Calculate average score for the question
+        total_score = 0
+        answer_count = 0
+        for answer in question_answers:
+            try:
+                total_score += int(answer.answer)  # Convert the answer to an integer
+                answer_count += 1
+            except ValueError:
+                pass  # Skip any non-numeric values
+
+        # Calculate the average and store it in the statistics dictionary
+        average = total_score / answer_count if answer_count > 0 else 'No Votes'
+        statistics['averages'][question.text] = "{:.2f}".format(average) if isinstance(average, float) else average
 
     return render_template('statistics.html', statistics=statistics, additional_texts=all_additional_texts)
 

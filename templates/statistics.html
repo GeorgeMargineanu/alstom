@@ -1,114 +1,198 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Statistics</title><link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet"><style>
-    body {
-        font-family: 'Roboto', sans-serif;
-        margin: 0;
-        padding: 0;
-        background-color: #f4f7fa;
-        color: #333;
-        line-height: 1.6;
-    }
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Statistics</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
 
-    h1, h2, h3 {
-        text-align: center;
-        margin-bottom: 20px;
-    }
-
-    h1 {
-        color: #4A90E2;
-        font-size: 2.5em;
-        text-transform: uppercase;
-        letter-spacing: 2px;
-    }
-
-    h2 {
-        color: #333;
-        font-weight: 400;
-        font-size: 1.8em;
-    }
-
-    h3 {
-        color: #666;
-        font-weight: 500;
-        font-size: 1.5em;
-    }
-
-    ul {
-        list-style: none;
-        padding: 0;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        margin: 0;
-    }
-
-    li {
-        background: #fff;
-        border-radius: 10px;
-        padding: 20px 30px;
-        margin: 15px 0;
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-        width: 80%;
-        transition: transform 0.3s, box-shadow 0.3s;
-    }
-
-    li:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
-    }
-
-    strong {
-        color: #4A90E2;
-        font-weight: 700;
-        display: block;
-        margin-bottom: 10px;
-        text-align: left; /* Left align for better readability */
-    }
-
-    .emoji-count {
-        display: inline-block;
-        width: 50px; /* Fixed width for emoji columns */
-        text-align: center;
-        margin-top: 5px; /* Space between lines */
-    }
-
-    a {
-        display: inline-block;
-        margin: 20px auto;
-        padding: 12px 24px;
-        color: #fff;
-        background-color: #4A90E2;
-        border-radius: 5px;
-        text-decoration: none;
-        font-weight: bold;
-        transition: background-color 0.3s, transform 0.3s;
-    }
-
-    a:hover {
-        background-color: #3a7bbf;
-        transform: scale(1.05); /* Scale effect on hover */
-    }
-
-    @media (max-width: 600px) {
-        li {
-            width: 95%;
+        h1, h2, h3 {
+            text-align: center;
+            margin-bottom: 20px;
         }
 
         h1 {
-            font-size: 2em;
+            color: #4A90E2;
+            font-size: 2.5em;
+            text-transform: uppercase;
+            letter-spacing: 2px;
         }
 
         h2 {
-            font-size: 1.5em;
+            color: #333;
+            font-weight: 400;
+            font-size: 1.8em;
         }
 
         h3 {
-            font-size: 1.2em;
+            color: #666;
+            font-weight: 500;
+            font-size: 1.5em;
         }
-    }
-</style></head><body><h1>Feedback Statistics</h1><h2>Total Responses: {{ statistics.total }}</h2><h3>Questions Stats</h3><ul>
-    {% for question, counts in statistics.question_stats.items() %}
-        <li><strong>{{ question }}</strong><div><span class="emoji-count">😊: {{ counts.happy }}</span><span class="emoji-count">😐: {{ counts.neutral }}</span><span class="emoji-count">😞: {{ counts.sad }}</span></div></li>
-    {% endfor %}
-</ul><a href="{{ url_for('messages') }}">Back to Messages</a>
-</ul><a href="{{ url_for('logout') }}">Logout</a>
-</body></html>
+
+        ul {
+            list-style: none;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+        }
+
+        li {
+            background: #fff;
+            border-radius: 10px;
+            padding: 20px 30px;
+            margin: 15px 0;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            width: 80%;
+            transition: transform 0.3s, box-shadow 0.3s;
+            overflow-wrap: break-word;
+            word-wrap: break-word;
+            word-break: break-word;
+        }
+
+        li:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+        }
+
+        strong {
+            color: #4A90E2;
+            font-weight: 700;
+            display: block;
+            margin-bottom: 10px;
+            text-align: left;
+        }
+
+        .average {
+            color: #007BFF;
+            font-weight: bold;
+            font-size: 1.2em;
+            margin-bottom: 10px;
+            text-align: left;
+        }
+
+        .emoji-count {
+            display: inline-block;
+            width: 50px;
+            text-align: center;
+            margin-top: 5px;
+        }
+
+        a {
+            display: inline-block;
+            margin: 20px auto;
+            padding: 12px 24px;
+            color: #fff;
+            background-color: #4A90E2;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: background-color 0.3s, transform 0.3s;
+        }
+
+        a:hover {
+            background-color: #3a7bbf;
+            transform: scale(1.05);
+        }
+
+        .grade-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .grade-item {
+            background-color: #f8f9fa;
+            border: 1px solid #ced4da;
+            border-radius: 5px;
+            padding: 10px;
+            width: 80px;
+            text-align: center;
+        }
+        
+        .grade-number {
+            font-weight: bold;
+            color: #007BFF;
+        }
+
+        @media (max-width: 600px) {
+            li {
+                width: 95%;
+            }
+
+            h1 {
+                font-size: 2em;
+            }
+
+            h2 {
+                font-size: 1.5em;
+            }
+
+            h3 {
+                font-size: 1.2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Feedback Statistics</h1>
+    <h2>Total Responses: {{ statistics.total }}</h2>
+    <h3>Questions Stats</h3>
+    <ul>
+        {% for question, counts in statistics.question_stats.items() %}
+        <li>
+            <strong>{{ question }}</strong>
+            <div class="average">Average Score: {{ statistics.averages[question] }}</div> <!-- Display the average score -->
+            <div>
+                <div class="grade-container">
+                    <div class="grade-item">
+                        <span class="grade-number">1:</span> {{ counts['Very Poor'] }}
+                    </div>
+                    <div class="grade-item">
+                        <span class="grade-number">2:</span> {{ counts['Poor'] }}
+                    </div>
+                    <div class="grade-item">
+                        <span class="grade-number">3:</span> {{ counts['Fair'] }}
+                    </div>
+                    <div class="grade-item">
+                        <span class="grade-number">4:</span> {{ counts['Below average'] }}
+                    </div>
+                    <div class="grade-item">
+                        <span class="grade-number">5:</span> {{ counts['Average'] }}
+                    </div>
+                    <div class="grade-item">
+                        <span class="grade-number">6:</span> {{ counts['Good'] }}
+                    </div>
+                    <div class="grade-item">
+                        <span class="grade-number">7:</span> {{ counts['Very Good'] }}
+                    </div>
+                    <div class="grade-item">
+                        <span class="grade-number">8:</span> {{ counts['Excellent'] }}
+                    </div>
+                    <div class="grade-item">
+                        <span class="grade-number">9:</span> {{ counts['Exceptional'] }}
+                    </div>
+                    <div class="grade-item">
+                        <span class="grade-number">10:</span> {{ counts['Perfect'] }}
+                    </div>
+                </div>
+            </div>
+        </li>
+        {% endfor %}
+    </ul>
+    <a href="{{ url_for('messages') }}">Back to Messages</a>
+    <a href="{{ url_for('logout') }}">Logout</a>
+</body>
+</html>
