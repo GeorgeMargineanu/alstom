@@ -1,0 +1,14 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>Add Question</title><link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}"></head><body><h1>Add a New Question</h1><form method="POST" class="form-container">
+    {{ form.hidden_tag() }}
+    <div class="form-group"><label for="question">Question</label>
+        {{ form.question() }}  <!-- Directly use the text field for the question -->
+        {% if form.question.errors %}
+            <ul class="error-list">
+                {% for error in form.question.errors %}
+                    <li>{{ error }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    </div><div class="submit-container">
+        {{ form.submit() }}
+    </div></form></body></html>

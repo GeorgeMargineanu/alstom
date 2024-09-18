@@ -1,4 +1,4 @@
-from flask import Flask, render_template, redirect, url_for, session, flash
+from flask import Flask, render_template, redirect, url_for, session, flash, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, EmailField, TextAreaField, RadioField, FormField
@@ -12,6 +12,7 @@ import datetime
 import jwt
 from itsdangerous import URLSafeTimedSerializer as Serializer
 from flask_wtf.csrf import CSRFProtect
+
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
@@ -61,6 +62,13 @@ class User(db.Model, UserMixin):
         except:
             return None
         return User.query.get(user_id)
+    
+class Question(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    text = db.Column(db.String(255),  nullable=False)
+    
+    def __repr__(self):
+        return f'<Question {self.text}>'
     
 class UserAnswer(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -125,6 +133,30 @@ def home():
 def dashboard():
     return render_template('dashboard.html')
 
+class AddQuestionForm(FlaskForm):
+    question = StringField('Question', validators=[DataRequired()])
+    submit = SubmitField('Add Question')
+
+@app.route('/admin/add_question', methods=['GET', 'POST'])
+@login_required
+def add_question():
+    if current_user.user_type != 'Admin':
+        return redirect(url_for('questions'))
+
+    form = AddQuestionForm()
+
+    if form.validate_on_submit():
+        new_question = Question(text=form.question.data)  # Now we use the new field
+        db.session.add(new_question)
+
+        try:
+            db.session.commit()
+            return redirect(url_for('questions'))  # Redirect to the questions page
+        except Exception as e:
+            print(f"Error committing to the database: {e}")
+
+    return render_template('add_question.html', form=form)
+
 class MessageForm(FlaskForm):
     contents = FieldList(TextAreaField('Message', validators=[DataRequired()]), min_entries=3)  # Example of multiple text areas
     submit = SubmitField('Send')
@@ -140,46 +172,44 @@ def logout():
 def some_view():
     return render_template('message_sent.html')
 
-questions_list = [
-    "Project tasks are followed in the weekly report?",
-    "Additional tasks are followed in the weekly report?",
-    "Do you think we are at least at 75% of the milestone proposed related to the 'mirror of our activity'?",
-    "Is it useful for you to have completed data in the weekly report?",
-    "Do you think that what was agreed upon till now in the team was respected?",
-]
 
 @app.route('/questions', methods=['GET', 'POST'])
 @login_required
 def questions():
+    print("Request method:", request.method)  # Check this line
     form = MultiQuestionForm()
+    form.questions.entries.clear()
+    questions_list = Question.query.all()  # Retrieve questions from the database
+    print(type(form), 'type form')
+    print(questions_list, 'questions list')
 
     if form.validate_on_submit():
-        for i, question_form in enumerate(form.questions):
-            selected_answer = question_form.answer.data
+        for i in range(len(questions_list)):
+            selected_answer = request.form.get(f'questions-{i + 1}-answer')
+            print('Selected answer:', selected_answer)
             if selected_answer:
                 user_answer = UserAnswer(
-                    question=questions_list[i],
+                    question=questions_list[i].text,
                     answer=selected_answer,
                     user_id=current_user.id
                 )
                 db.session.add(user_answer)
 
-        additional_message = form.additional_text.data 
+        additional_message = form.additional_text.data
+            
         if additional_message:
             additional_text_entry = AdditionalText(
                 message=additional_message,
                 user_id=current_user.id
             )
             db.session.add(additional_text_entry)
-
         try:
             db.session.commit()
-            #flash('Your answers have been submitted!', 'success')
+            return redirect(url_for('statistics'))  # Redirect to statistics page after submission
         except Exception as e:
             print(f"Error committing to the database: {e}")
-
-        return redirect(url_for('statistics'))
-
+    
+    print(form.errors)  # Log form errors if exist
     return render_template('questions.html', form=form, questions=questions_list)
 
 @app.route('/admin/statistics', methods=['GET'])
@@ -190,7 +220,7 @@ def admin_statistics():
     
     all_answers = UserAnswer.query.all()
     all_users = {user.id: user.username for user in User.query.all()}
-
+    print(all_answers, 'raspunsuri')
     # Reorganize statistics for unique questions
     statistics = {}
     for answer in all_answers:
@@ -205,37 +235,79 @@ def admin_statistics():
 
     return render_template('admin_statistics.html', statistics=statistics, all_users=all_users)
 
+@app.route('/admin/clean_database', methods=['GET'])
+@login_required
+def clean_database():
+    if current_user.user_type != 'Admin':
+        flash('You do not have permission to perform this action', 'error')
+        return redirect(url_for('statistics'))
+    
+    #Get all questions an delete them
+    all_questions = Question.query.all()
+
+    if all_questions:
+        for question in all_questions:
+            db.session.delete(question)
+        db.session.commit()
+        flash('All the questions have been deleted successfully', 'success')
+    
+    else:
+        flash('No questions found to delete', 'info')
+    return redirect(url_for('statistics'))
+
+@app.route('/admin/delete_answers', methods=['GET'])
+@login_required
+def clean_database_answers():
+    if current_user.user_type != 'Admin':
+        flash('You do not have permission to perform this action', 'error')
+        return redirect(url_for('statistics'))
+    
+    #Get all questions an delete them
+    all_answers = UserAnswer.query.all()
+
+    if all_answers:
+        for answer in all_answers:
+            db.session.delete(answer)
+        db.session.commit()
+        flash('All the questions have been deleted successfully', 'success')
+    
+    else:
+        flash('No questions found to delete', 'info')
+    return redirect(url_for('statistics'))
+
 @app.route('/statistics', methods=['GET'])
 @login_required
 def statistics():
     all_answers = UserAnswer.query.all()
-    #all_additional_texts = AdditionalText.query.filter_by(user_id=current_user.id).all()  # this displays only the messages written by the user
-    all_additional_texts = AdditionalText.query.all() #This retrieves all the messages
+    all_additional_texts = AdditionalText.query.all()  # This retrieves all the messages
 
+    # Retrieve all questions from the database
+    all_questions = Question.query.all()
+    
     statistics = {
         'total': len(all_answers),
         'question_stats': {}
     }
- 
+
     # Define emoji mappings
     emoji_mapping = {
         '😊': 'happy',
         '😐': 'neutral',
         '😞': 'sad'
     }
- 
+
     # Process answers for each question
-    for question in questions_list:
-        question_answers = [answer for answer in all_answers if answer.question == question]
-       
+    for question in all_questions:
+        question_answers = [answer for answer in all_answers if answer.question == question.text]  # Use question.text
+
         # Count responses based on emojis
         counts = {
             'happy': sum(1 for a in question_answers if a.answer == '😊'),
             'neutral': sum(1 for a in question_answers if a.answer == '😐'),
             'sad': sum(1 for a in question_answers if a.answer == '😞'),
         }
- 
-        statistics['question_stats'][question] = counts
+
+        statistics['question_stats'][question.text] = counts  # Use question.text for the key
 
     return render_template('statistics.html', statistics=statistics, additional_texts=all_additional_texts)
 
