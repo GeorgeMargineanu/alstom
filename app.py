@@ -527,11 +527,21 @@ def reset_token(token):
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     form = LoginForm()
+
     if 'failed_logins' not in session:  # Initialize if not present
         session['failed_logins'] = 0
 
     if form.validate_on_submit():
-        user = User.query.filter_by(username=form.username.data).first()
+        # Check if the input is an email (simple check for @ character)
+        login_identifier = form.username.data  # Assuming 'username' field is used for both
+        if '@' in login_identifier:
+            # If input contains an '@', treat it as an email
+            user = User.query.filter_by(email=login_identifier).first()
+        else:
+            # Otherwise, treat it as a username
+            user = User.query.filter_by(username=login_identifier).first()
+
+        # Validate the user's credentials
         if user and bcrypt.check_password_hash(user.password, form.password.data):
             login_user(user, remember=True)
             session['failed_logins'] = 0  # Reset failed login counter on success
