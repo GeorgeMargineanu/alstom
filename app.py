@@ -82,6 +82,7 @@ class AdditionalText(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     message = db.Column(db.String(500), nullable=False)  # Adjust size as needed
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user = db.relationship('User', backref='messages')
 
 """
  '1': 'Very Poor',
@@ -262,16 +263,27 @@ def logout():
 def some_view():
     return render_template('message_sent.html')
 
+@app.route('/already_voted')
+@login_required
+def already_voted():
+    return render_template('already_voted.html')
 
 @app.route('/questions', methods=['GET', 'POST'])
 @login_required
 def questions():
-    print("Request method:", request.method)  # Check this line
+    print("Request method:", request.method)
     form = MultiQuestionForm()
     form.questions.entries.clear()
     questions_list = Question.query.all()  # Retrieve questions from the database
     print(type(form), 'type form')
     print(questions_list, 'questions list')
+
+    # Step 1: Check if the user has already voted
+    has_voted = UserAnswer.query.filter_by(user_id=current_user.id).first()
+
+    if has_voted:
+        # User has already voted, redirect to another page or show a message
+        return redirect(url_for('already_voted'))  # Redirect to a page that indicates they've already voted
 
     if form.validate_on_submit():
         for i in range(len(questions_list)):
@@ -293,6 +305,7 @@ def questions():
                 user_id=current_user.id
             )
             db.session.add(additional_text_entry)
+
         try:
             db.session.commit()
             return redirect(url_for('statistics'))  # Redirect to statistics page after submission
@@ -479,6 +492,15 @@ def messages():
     # Query all additional messages from the current user
     all_additional_texts = AdditionalText.query.all()
     return render_template('messages.html', additional_texts=all_additional_texts)
+
+@app.route('/admin/messages', methods=['GET'])
+@login_required
+def admin_messages():
+    # Query all additional messages from the current user
+    if current_user.user_type != 'Admin':
+        return redirect(url_for('statistics'))
+    all_additional_texts = AdditionalText.query.all()
+    return render_template('admin_messages.html', additional_texts=all_additional_texts)
 
 @app.route('/recover_password', methods=['GET', 'POST'])
 def recover_password():
