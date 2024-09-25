@@ -96,18 +96,17 @@
 </head>
 <body>
     <h1>Answer Open Questions</h1>
-    <form method="POST" action="">
+    <form method="POST">
         {{ form.hidden_tag() }}
-        {% for question, field in zip(questions, form.questions) %}
-            <div class="form-group">
-                <label>{{ question.text }}</label><br>
-                {{ field.answer(rows=3, cols=60) }}
+        {% for question in questions %}
+            <div class="form-group"><label>{{ question.text }}</label>
+                {{ form.questions[loop.index0].answer(rows=3, cols=50) }}  <!-- Correctly Render the TextAreaField -->
+                {% for error in form.questions[loop.index0].answer.errors %}
+                    <span style="color: red;">[{{ error }}]</span>
+                {% endfor %}
             </div>
         {% endfor %}
-        <div class="form-group">
-            <input class="btn-primary" type="submit" value="Submit Answers">
-        </div>
-    </form>
+        <button type="submit" class="btn-primary">Submit Answers</button></form>
     <a href="{{ url_for('logout') }}">Logout</a>
 </body>
 </html>

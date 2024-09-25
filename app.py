@@ -15,7 +15,6 @@ from flask_wtf.csrf import CSRFProtect
 import pandas as pd
 from flask import send_file, abort
 import io
-from datetime import datetime
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
@@ -598,19 +597,15 @@ class OpenQuestion(db.Model):
     __tablename__ = 'open_questions'
     id = db.Column(db.Integer, primary_key=True)
     text = db.Column(db.Text, nullable=False)  # The question text
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.datetime.utcnow)
 
 # Table to store users' answers to open questions
 class UserOpenAnswer(db.Model):
-    __tablename__ = 'user_open_answers'
     id = db.Column(db.Integer, primary_key=True)
     question_id = db.Column(db.Integer, db.ForeignKey('open_questions.id'), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    answer = db.Column(db.Text, nullable=False)  # The user's answer
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-
-    question = db.relationship('OpenQuestion', backref='answers')
-    user = db.relationship('User', backref='open_answers')
+    answer = db.Column(db.String(1000), nullable=False)  # Ensure 'answer' is a string field
+    created_at = db.Column(db.DateTime, default=datetime.datetime.utcnow)
 
 class AdminOpenQuestionForm(FlaskForm):
     question_text = StringField('Question', validators=[DataRequired()])
@@ -619,7 +614,6 @@ class AdminOpenQuestionForm(FlaskForm):
 @app.route('/admin/add_open_question', methods=['GET', 'POST'])
 @login_required
 def add_open_question():
-    # Only allow admins to access this page
     if current_user.user_type != 'Admin':
         abort(403)
     
@@ -631,61 +625,78 @@ def add_open_question():
         flash('Question added successfully!', 'success')
         return redirect(url_for('add_open_question'))
     
-    return render_template('add_question_open.html', form=form)
+    return render_template('add_question_open.html', form=form, enumerate=enumerate)
 
 class UserAnswerForm(FlaskForm):
-    answer = TextAreaField('Your Answer', validators=[DataRequired()])
+    answer = TextAreaField('Answer', validators=[DataRequired()])
 
+# Form for all questions (multiple answers)
 class OpenQuestionsForm(FlaskForm):
-    questions = FieldList(FormField(UserAnswerForm))
-    submit = SubmitField('Submit Answers')
+    questions = FieldList(FormField(UserAnswerForm), min_entries=0)         
 
-@app.route('/open_questions', methods=['GET', 'POST'])
+@app.route('/open_questions', methods=['GET', 'POST'], endpoint='open_questions')
 @login_required
 def answer_open_questions():
-    form = OpenQuestionsForm()
     questions_list = OpenQuestion.query.all()
 
-    # Populate the dynamic form with existing questions
+    if not questions_list:
+        flash('No questions available!', 'warning')
+        return render_template('open_questions.html', form=None, questions=questions_list)
+
+    # Create your form and populate only on GET requests
+    form = OpenQuestionsForm()
+
+    if request.method == 'POST':
+        # Populate the form with the answers submitted
+        for question in questions_list:
+            question_form = UserAnswerForm(request.form.getlist(f'questions-{question.id}-answer'))
+            form.questions.append_entry(question_form)
+            
+        if form.validate_on_submit():
+            try:
+                for question in questions_list:
+                    user_answer = form.questions[question.id - 1].answer.data  # Using question ID for the index
+                    if not user_answer:
+                        user_answer = "No answer provided."
+                        
+                    print(f"User Answer for question {question.id}: '{user_answer}' (Type: {type(user_answer)})")
+                    
+                    answer_entry = UserOpenAnswer(
+                        question_id=question.id,
+                        user_id=current_user.id,
+                        answer=user_answer,
+                    )
+                    db.session.add(answer_entry)
+
+                db.session.commit()
+                flash('Your answers have been submitted!', 'success')
+                return redirect(url_for('open_questions'))
+
+            except Exception as e:
+                db.session.rollback()
+                print(f"Error during commit: {e}")
+                flash(f"An error occurred: {e}", 'danger')
+        else:
+            print("Form submission failed, validation errors:", form.errors)
+
+    # Clear and populate fields
     form.questions.entries.clear()
     for question in questions_list:
-        form.questions.append_entry()
+        form.questions.append_entry(UserAnswerForm())  # Add new empty forms for rendering
 
-    if form.validate_on_submit():
-        print("Form data:", form.questions.data)  # Add this line to see the submitted data
+    return render_template('open_questions.html', form=form, questions=questions_list, enumerate=enumerate)
 
-        for i in range(len(questions_list)):
-            user_answer = form.questions[i].answer.data
-            print(f"Question {i+1}: {user_answer}")  # Add this to print each answer
-            question_id = questions_list[i].id
-            answer_entry = UserOpenAnswer(
-                question_id=question_id,
-                user_id=current_user.id,
-                answer=user_answer
-            )
-            db.session.add(answer_entry)
-        
-        try:
-            db.session.commit()
-            flash('Your answers have been submitted!', 'success')
-            return redirect(url_for('open_questions'))
-        except Exception as e:
-            db.session.rollback()
-            flash(f"An error occurred: {e}", 'danger')
-    
-    return render_template('open_questions.html', form=form, questions=questions_list, zip=zip)
 
 @app.route('/open_question/messages', methods=['GET'])
 @login_required
 def open_question_messages():
-    # Use outer join to get all questions, even if there are no answers
+    # Get all questions with their answers (using outer join to handle unanswered questions)
     questions_with_answers = db.session.query(OpenQuestion, UserOpenAnswer) \
         .outerjoin(UserOpenAnswer, OpenQuestion.id == UserOpenAnswer.question_id) \
         .all()
 
+    # Render the template that displays the questions and answers
     return render_template('answers_open_messages.html', questions_with_answers=questions_with_answers)
-
-
 
 if __name__ == '__main__':
     with app.app_context():
