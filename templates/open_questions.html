@@ -96,17 +96,22 @@
 </head>
 <body>
     <h1>Answer Open Questions</h1>
-    <form method="POST">
+    <form method="POST" autocomplete="off"> 
         {{ form.hidden_tag() }}
         {% for question in questions %}
-            <div class="form-group"><label>{{ question.text }}</label>
-                {{ form.questions[loop.index0].answer(rows=3, cols=50) }}  <!-- Correctly Render the TextAreaField -->
+            <div class="form-group">
+                <label for="question-{{ question.id }}">{{ question.text }}</label>
+                <!-- Manually create the textarea with unique id and name attributes -->
+                <textarea id="question-{{ question.id }}" name="questions-{{ question.id }}-answer" rows="3" cols="50" autocomplete="off"></textarea>
+                
+                <!-- Manually render any validation errors for this field -->
                 {% for error in form.questions[loop.index0].answer.errors %}
                     <span style="color: red;">[{{ error }}]</span>
                 {% endfor %}
             </div>
         {% endfor %}
-        <button type="submit" class="btn-primary">Submit Answers</button></form>
+        <button type="submit" class="btn btn-primary">Submit Answers</button>
+    </form>
     <a href="{{ url_for('logout') }}">Logout</a>
 </body>
 </html>

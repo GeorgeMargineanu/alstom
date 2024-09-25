@@ -638,52 +638,54 @@ class OpenQuestionsForm(FlaskForm):
 @login_required
 def answer_open_questions():
     questions_list = OpenQuestion.query.all()
-
+ 
     if not questions_list:
         flash('No questions available!', 'warning')
-        return render_template('open_questions.html', form=None, questions=questions_list)
-
-    # Create your form and populate only on GET requests
-    form = OpenQuestionsForm()
+        return render_template('statistics.html', form=None, questions=questions_list)
+ 
+    form = OpenQuestionsForm()  # Initialize the form
 
     if request.method == 'POST':
         # Populate the form with the answers submitted
         for question in questions_list:
-            question_form = UserAnswerForm(request.form.getlist(f'questions-{question.id}-answer'))
+            # Assuming that UserAnswerForm takes input name formatted as 'questions-<question_id>-answer'
+            user_answer = request.form.get(f'questions-{question.id}-answer', "")
+            question_form = UserAnswerForm(answer=user_answer)
             form.questions.append_entry(question_form)
-            
+
         if form.validate_on_submit():
             try:
                 for question in questions_list:
-                    user_answer = form.questions[question.id - 1].answer.data  # Using question ID for the index
+                    user_answer = form.questions[question.id - 1].answer.data
                     if not user_answer:
                         user_answer = "No answer provided."
-                        
+                       
                     print(f"User Answer for question {question.id}: '{user_answer}' (Type: {type(user_answer)})")
-                    
                     answer_entry = UserOpenAnswer(
                         question_id=question.id,
                         user_id=current_user.id,
                         answer=user_answer,
                     )
                     db.session.add(answer_entry)
-
+ 
                 db.session.commit()
                 flash('Your answers have been submitted!', 'success')
                 return redirect(url_for('open_questions'))
-
+ 
             except Exception as e:
                 db.session.rollback()
                 print(f"Error during commit: {e}")
                 flash(f"An error occurred: {e}", 'danger')
         else:
             print("Form submission failed, validation errors:", form.errors)
-
-    # Clear and populate fields
-    form.questions.entries.clear()
+ 
+    # Clear and populate fields if it's a GET request or the form is invalid
+    form.questions.entries.clear()  # Clear existing entries for rendering
+    form.questions.entries.clear()  # Clear existing entries for rendering
     for question in questions_list:
-        form.questions.append_entry(UserAnswerForm())  # Add new empty forms for rendering
-
+        # Create empty answer text areas for each question
+        form.questions.append_entry(UserAnswerForm(answer=""))
+ 
     return render_template('open_questions.html', form=form, questions=questions_list, enumerate=enumerate)
 
 
