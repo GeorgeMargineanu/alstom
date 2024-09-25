@@ -50,13 +50,30 @@
         width: 100%;
         margin-top: 20px;
     }
-</style></head><body><header><h1>Open Question Answers</h1></header><main><div>
-    {% for question, answer in questions_with_answers %}
-        <h3>Question: {{ question.text }}</h3>
-        {% if answer %}
-            <p><strong>Answer by User {{ answer.user_id }}:</strong> {{ answer.answer }}</p>
-        {% else %}
-            <p class="no-answer"><strong>No answers yet for this question.</strong></p>
-        {% endif %}
-    {% endfor %}
-</div></main><footer><p>&copy; 2023 Your Company Name. All Rights Reserved.</p></footer></body></html>
+</style>
+</head>
+<body>
+    <header>
+      <h1>Open Question Answers</h1>
+    </header>
+    <main>
+      <div> 
+        {% for question, answer, user in questions_with_answers %}
+          <h3>Question: {{ question.text }}</h3> 
+          {% if answer %} 
+            <p>
+              <strong>{{ user.username }}:</strong> {{ answer.answer }}
+            </p> 
+          {% else %} 
+            <p class="no-answer">
+              <strong>No answers yet for this question.</strong>
+            </p> 
+          {% endif %} 
+        {% endfor %} 
+      </div>
+    </main>
+    <footer>
+      <p>&copy; 2024 Alstom. All Rights Reserved.</p>
+    </footer>
+</body>
+</html>

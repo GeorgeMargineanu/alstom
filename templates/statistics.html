@@ -89,9 +89,15 @@
             margin-top: 5px;
         }
 
+        .button-container {
+            text-align: center; /* Center the buttons */
+            margin-top: 20px;
+        }
+
         a {
+            text-align: center;
             display: inline-block;
-            margin: 20px auto;
+            margin: 20px 10px;
             padding: 12px 24px;
             color: #fff;
             background-color: #4A90E2;
@@ -103,7 +109,7 @@
 
         a:hover {
             background-color: #3a7bbf;
-            transform: scale(1.05);
+            transform: scale(1.09);
         }
 
         .grade-container {
@@ -112,7 +118,7 @@
             gap: 15px;
             margin: 20px 0;
         }
-        
+
         .grade-item {
             background-color: #f8f9fa;
             border: 1px solid #ced4da;
@@ -121,7 +127,7 @@
             width: 80px;
             text-align: center;
         }
-        
+
         .grade-number {
             font-weight: bold;
             color: #007BFF;
@@ -154,7 +160,7 @@
         {% for question, counts in statistics.question_stats.items() %}
         <li>
             <strong>{{ question }}</strong>
-            <div class="average">Average Score: {{ statistics.averages[question] }}</div> <!-- Display the average score -->
+            <div class="average">Average Score: {{ statistics.averages[question] }}</div>
             <div>
                 <div class="grade-container">
                     <div class="grade-item">
@@ -192,7 +198,11 @@
         </li>
         {% endfor %}
     </ul>
-    <a href="{{ url_for('messages') }}">Back to Messages</a>
-    <a href="{{ url_for('logout') }}">Logout</a>
+    
+    <!-- Center the buttons -->
+    <div class="button-container">
+        <a href="{{ url_for('messages') }}">Back to Messages</a>
+        <a href="{{ url_for('logout') }}">Logout</a>
+    </div>
 </body>
 </html>

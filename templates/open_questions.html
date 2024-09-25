@@ -75,6 +75,12 @@
             background-color: #3a7bbf;
         }
 
+        /* Centering the logout button */
+        .logout-container {
+            text-align: center;
+            margin-top: 20px;
+        }
+
         a {
             display: inline-block;
             margin: 20px auto;
@@ -91,6 +97,18 @@
         a:hover {
             background-color: #3a7bbf;
             transform: scale(1.05);
+        }
+
+        /* Center the footer */
+        footer {
+            text-align: center;
+            margin-top: 20px;
+            padding: 10px 0;
+            background-color: #4A90E2;
+            color: #fff;
+            position: relative;
+            bottom: 0;
+            width: 100%;
         }
     </style>
 </head>
@@ -112,6 +130,14 @@
         {% endfor %}
         <button type="submit" class="btn btn-primary">Submit Answers</button>
     </form>
-    <a href="{{ url_for('logout') }}">Logout</a>
+    
+    <!-- Center the logout button -->
+    <div class="logout-container">
+        <a href="{{ url_for('logout') }}">Logout</a>
+    </div>
+
+    <footer>
+        <p>&copy; 2024 Alstom. All Rights Reserved.</p>
+    </footer>
 </body>
 </html>

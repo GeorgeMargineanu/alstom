@@ -638,6 +638,12 @@ class OpenQuestionsForm(FlaskForm):
 @login_required
 def answer_open_questions():
     questions_list = OpenQuestion.query.all()
+
+    has_voted = UserOpenAnswer.query.filter_by(user_id=current_user.id).first()
+
+    if has_voted:
+        # User has already voted, redirect to another page or show a message
+        return redirect(url_for('already_voted'))  # Redirect to a page that indicates they've already voted
  
     if not questions_list:
         flash('No questions available!', 'warning')
@@ -693,8 +699,9 @@ def answer_open_questions():
 @login_required
 def open_question_messages():
     # Get all questions with their answers (using outer join to handle unanswered questions)
-    questions_with_answers = db.session.query(OpenQuestion, UserOpenAnswer) \
+    questions_with_answers = db.session.query(OpenQuestion, UserOpenAnswer, User) \
         .outerjoin(UserOpenAnswer, OpenQuestion.id == UserOpenAnswer.question_id) \
+        .outerjoin(User, User.id == UserOpenAnswer.user_id) \
         .all()
 
     # Render the template that displays the questions and answers
