@@ -15,6 +15,8 @@ from flask_wtf.csrf import CSRFProtect
 import pandas as pd
 from flask import send_file, abort
 import io
+from wtforms import HiddenField
+
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
@@ -34,6 +36,7 @@ app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USE_SSL'] = False
 #app.config['WTF_CSRF_ENABLED'] = False #disable CSRF only for debug purposes
 csrf = CSRFProtect(app)  # Add this line to set up CSRF protection
+csrf._disable_on_test = True  # For testing purposes only
 mail = Mail(app)
 
 @login_manager.user_loader
@@ -695,17 +698,69 @@ def answer_open_questions():
     return render_template('open_questions.html', form=form, questions=questions_list, enumerate=enumerate)
 
 
+class DeleteQuestionForm(FlaskForm):
+    hidden_tag = HiddenField()
+
+@app.route('/open_questions/delete_all', methods=['POST'])
+@login_required
+def delete_all_open_questions():
+    if current_user.user_type != 'Admin':
+        flash('You do not have permission to perform this action', 'error')
+        return redirect(url_for('statistics'))
+
+    try:
+        # Delete all UserOpenAnswer entries
+        UserOpenAnswer.query.delete()
+
+        # Delete all OpenQuestion entries
+        OpenQuestion.query.delete()
+
+        db.session.commit()
+        flash('All questions and their answers have been deleted successfully!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f"An error occurred: {e}", 'danger')
+
+    return redirect(url_for('open_question_messages'))  # Redirect back to the open questions page
 @app.route('/open_question/messages', methods=['GET'])
 @login_required
 def open_question_messages():
-    # Get all questions with their answers (using outer join to handle unanswered questions)
+    if current_user.user_type != 'Admin':
+        flash('You do not have permission to perform this action', 'error')
+        return redirect(url_for('statistics'))
+
     questions_with_answers = db.session.query(OpenQuestion, UserOpenAnswer, User) \
         .outerjoin(UserOpenAnswer, OpenQuestion.id == UserOpenAnswer.question_id) \
         .outerjoin(User, User.id == UserOpenAnswer.user_id) \
         .all()
 
-    # Render the template that displays the questions and answers
-    return render_template('answers_open_messages.html', questions_with_answers=questions_with_answers)
+    delete_form = DeleteQuestionForm()  # Create form instance
+
+    return render_template('answers_open_messages.html', questions_with_answers=questions_with_answers, form=delete_form)
+
+@app.route('/open_question/delete/<int:question_id>', methods=['POST'])
+@login_required
+def delete_open_question(question_id):
+    if current_user.user_type != 'Admin':
+        flash('You do not have permission to perform this action', 'error')
+        return redirect(url_for('statistics'))
+
+    question = OpenQuestion.query.get_or_404(question_id)
+
+    try:
+        # Delete all answers associated with the question
+        UserOpenAnswer.query.filter_by(question_id=question.id).delete()
+
+        # Delete the question itself
+        db.session.delete(question)
+        db.session.commit()
+
+        flash('Question and its answers have been deleted successfully!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f"An error occurred: {e}", 'danger')
+
+    return redirect(url_for('open_question_messages'))  # Redirect to the messages page
 
 if __name__ == '__main__':
     with app.app_context():
