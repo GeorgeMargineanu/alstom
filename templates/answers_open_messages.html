@@ -115,6 +115,7 @@
           {{ form.hidden_tag() }}  <!-- CSRF token -->
           <button type="submit" class="danger-button">Delete All Questions</button>
         </form>
+        <p>CSRF Token: {{ form.hidden_tag() }}</p>  <!-- Debug print CSRF token -->
         <a href="{{ url_for('logout') }}">Logout</a>
       </div>
     </main>

@@ -34,9 +34,8 @@ app.config['MAIL_USERNAME'] = 'georgemargineanu20@gmail.com'
 app.config['MAIL_PASSWORD'] = 'dujo jgcj cdjc ulux'
 app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USE_SSL'] = False
-#app.config['WTF_CSRF_ENABLED'] = False #disable CSRF only for debug purposes
-csrf = CSRFProtect(app)  # Add this line to set up CSRF protection
-csrf._disable_on_test = True  # For testing purposes only
+app.config['WTF_CSRF_ENABLED'] = False #disable CSRF only for debug purposes
+csrf = CSRFProtect(app)  # Add this line to set up CSRF protection# 
 mail = Mail(app)
 
 @login_manager.user_loader
@@ -650,7 +649,7 @@ def answer_open_questions():
  
     if not questions_list:
         flash('No questions available!', 'warning')
-        return render_template('statistics.html', form=None, questions=questions_list)
+        return render_template('return_later.html', form=None, questions=questions_list)
  
     form = OpenQuestionsForm()  # Initialize the form
 
@@ -736,7 +735,11 @@ def open_question_messages():
 
     delete_form = DeleteQuestionForm()  # Create form instance
 
+    # Debug print form object
+    print(delete_form)
+
     return render_template('answers_open_messages.html', questions_with_answers=questions_with_answers, form=delete_form)
+
 
 @app.route('/open_question/delete/<int:question_id>', methods=['POST'])
 @login_required
