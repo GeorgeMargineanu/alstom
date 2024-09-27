@@ -721,6 +721,7 @@ def delete_all_open_questions():
         flash(f"An error occurred: {e}", 'danger')
 
     return redirect(url_for('open_question_messages'))  # Redirect back to the open questions page
+
 @app.route('/open_question/messages', methods=['GET'])
 @login_required
 def open_question_messages():
@@ -731,6 +732,7 @@ def open_question_messages():
     questions_with_answers = db.session.query(OpenQuestion, UserOpenAnswer, User) \
         .outerjoin(UserOpenAnswer, OpenQuestion.id == UserOpenAnswer.question_id) \
         .outerjoin(User, User.id == UserOpenAnswer.user_id) \
+        .order_by(User.username.asc()) \
         .all()
 
     delete_form = DeleteQuestionForm()  # Create form instance
