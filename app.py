@@ -87,30 +87,20 @@ class AdditionalText(db.Model):
     user = db.relationship('User', backref='messages')
 
 """
- '1': 'Very Poor',
-        '2': 'Poor',
-        '3': 'Fair',
-        '4': 'Below average',
-        '5': 'Average',
-        '6': 'Good',
-        '7': 'Very Good',
-        '8': 'Excellent',
-        '9': 'Exceptional',
-        '10': 'Perfect'
+        ('1', 'Poor'),    # Smiley Face
+        ('2', 'Fair'),  # Neutral Face
+        ('3', 'Average'),
+        ('4', 'Good'),
+        ('5', 'Perfect'),
         """
 
 class QuestionForm(FlaskForm):
     answer = RadioField('', choices=[
-        ('1', 'Very Poor'),    # Smiley Face
-        ('2', 'Poor'),  # Neutral Face
-        ('3', 'Fair'),
-        ('4', 'Below average'),
-        ('5', 'Average'),
-        ('6', 'Good'),
-        ('7', 'Very Good'),
-        ('8', 'Excellent'),
-        ('9', 'Exceptional'),
-        ('10', 'Perfect'),      # Sad Face
+        ('1', 'Poor'),    # Smiley Face
+        ('2', 'Fair'),  # Neutral Face
+        ('3', 'Average'),
+        ('4', 'Good'),
+        ('5', 'Perfect'),
     ], validators=[DataRequired()])
 
 
@@ -440,17 +430,12 @@ def statistics():
 
     # Define emoji mappings
     emoji_mapping = {
-        '1': 'Very Poor',
-        '2': 'Poor',
-        '3': 'Fair',
-        '4': 'Below average',
-        '5': 'Average',
-        '6': 'Good',
-        '7': 'Very Good',
-        '8': 'Excellent',
-        '9': 'Exceptional',
-        '10': 'Perfect'
-    }
+        '1': 'Poor',
+        '2': 'Fair',
+        '3': 'Average',
+        '4': 'Good',
+        '5': 'Perfect',
+         }
 
     # Process answers for each question
     for question in all_questions:
@@ -458,17 +443,12 @@ def statistics():
 
         # Count responses based on emojis
         counts = {
-            'Very Poor': sum(1 for a in question_answers if a.answer == '1'),
-            'Poor': sum(1 for a in question_answers if a.answer == '2'),
-            'Fair': sum(1 for a in question_answers if a.answer == '3'),
-            'Below average': sum(1 for a in question_answers if a.answer == '4'),
-            'Average': sum(1 for a in question_answers if a.answer == '5'),
-            'Good': sum(1 for a in question_answers if a.answer == '6'),
-            'Very Good': sum(1 for a in question_answers if a.answer == '7'),
-            'Excellent': sum(1 for a in question_answers if a.answer == '8'),
-            'Exceptional': sum(1 for a in question_answers if a.answer == '9'),
-            'Perfect': sum(1 for a in question_answers if a.answer == '10'),
-        }
+            'Poor': sum(1 for a in question_answers if a.answer == '1'),
+            'Fair': sum(1 for a in question_answers if a.answer == '2'),
+            'Average': sum(1 for a in question_answers if a.answer == '3'),
+            'Good': sum(1 for a in question_answers if a.answer == '4'),
+            'Perfect': sum(1 for a in question_answers if a.answer == '5'),
+            }
 
         statistics['question_stats'][question.text] = counts  # Use question.text for the key
 
