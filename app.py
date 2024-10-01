@@ -2,7 +2,7 @@ from flask import Flask, render_template, redirect, url_for, session, flash, req
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, EmailField, TextAreaField, RadioField, FormField
-from wtforms.validators import DataRequired, ValidationError, Email, EqualTo
+from wtforms.validators import DataRequired, ValidationError, Email, EqualTo, Optional
 from flask_login import UserMixin, login_user, LoginManager, login_required, current_user, logout_user
 from flask_bcrypt import Bcrypt
 from flask_migrate import Migrate
@@ -106,7 +106,7 @@ class QuestionForm(FlaskForm):
 
 class MultiQuestionForm(FlaskForm):
     questions = FieldList(FormField(QuestionForm), min_entries=5)  # Adjust min_entries as needed
-    additional_text = TextAreaField('Additional Comments', validators=[DataRequired()])  # Ensure this field is present
+    additional_text = TextAreaField('Additional Comments', validators=[Optional()])  # Ensure this field is present
     submit = SubmitField('Submit All')
 
 class LoginForm(FlaskForm):
