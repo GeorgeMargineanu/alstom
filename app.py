@@ -234,7 +234,7 @@ def add_question():
 
         try:
             db.session.commit()
-            return redirect(url_for('questions'))  # Redirect to the questions page
+            return redirect(url_for('add_question'))  # Redirect to the questions page
         except Exception as e:
             print(f"Error committing to the database: {e}")
 
