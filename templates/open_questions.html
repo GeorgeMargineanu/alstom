@@ -81,6 +81,11 @@
             margin-top: 20px;
         }
 
+        .questions-container {
+            text-align: center;
+            margin-top: 20px;
+        }
+
         a {
             display: inline-block;
             margin: 20px auto;
@@ -131,10 +136,16 @@
         <button type="submit" class="btn btn-primary">Submit Answers</button>
     </form>
     
+
+    <div class="questions-container">
+        <a href="{{ url_for('questions') }}">Go to closed questions</a>
+    </div>
+
     <!-- Center the logout button -->
     <div class="logout-container">
         <a href="{{ url_for('logout') }}">Logout</a>
     </div>
+    
 
     <footer>
         <p>&copy; 2024 Alstom. All Rights Reserved.</p>
