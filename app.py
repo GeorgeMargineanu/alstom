@@ -270,6 +270,9 @@ def questions():
     print(type(form), 'type form')
     print(questions_list, 'questions list')
 
+    if not questions_list:
+        return render_template('return_later.html', form=None, questions=questions_list)
+
     # Step 1: Check if the user has already voted
     has_voted = UserAnswer.query.filter_by(user_id=current_user.id).first()
 
@@ -658,7 +661,7 @@ def answer_open_questions():
 
                 db.session.commit()
                 flash('Your answers have been submitted!', 'success')
-                return redirect(url_for('open_questions'))
+                return redirect(url_for('already_voted'))
 
             except Exception as e:
                 db.session.rollback()
